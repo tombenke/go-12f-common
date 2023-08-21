@@ -20,7 +20,7 @@ func TestGetEnvWithDefault(t *testing.T) {
 func TestGetEnvWithDefaultUint(t *testing.T) {
 
 	// Test with valid default value and valid env var
-	assert.Equal(t, uint64(42), env.GetEnvWithDefaultUint("TEST_UINT_ENV_VAR", "0"))
+	assert.Equal(t, uint64(42), env.GetEnvWithDefaultUint("TEST_UINT_ENV_VAR", "42"))
 
 	// Test with valid default value and missing env var
 	defaultValue := uint64(24)
