@@ -1,4 +1,4 @@
-name: Quality Check
+name: ci
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.16"
+          go-version: "1.21"
 
       - name: Setup task
         uses: Arduino/actions/setup-taskfile@master
@@ -25,4 +25,7 @@ jobs:
         run: task setup
 
       - name: Run go test task
-        run: task test-cold
+        run: task lint
+
+      - name: Run go test task
+        run: task test
