@@ -48,6 +48,7 @@ func (a *ExampleApp) Startup(wg *sync.WaitGroup) {
 
 func (a *ExampleApp) Shutdown() {
 	log.Logger.Infof("ExampleApp Shutdown")
+	a.err = healthcheck.ServiceNotAvailableError{}
 }
 
 func (a *ExampleApp) Check() error {
