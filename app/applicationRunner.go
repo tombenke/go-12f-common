@@ -11,9 +11,9 @@ import (
 )
 
 // Wrapper function to make and run an application via ApplicationRunner
-func MakeAndRun(appWg *sync.WaitGroup, appFactory func(wg *sync.WaitGroup) (LifecycleManager, error)) {
-	exampleApp := must.MustVal(appFactory(appWg))
-	must.MustVal(NewApplicationRunner(appWg, exampleApp)).Run()
+func MakeAndRun(appFactory func() (LifecycleManager, error)) {
+	exampleApp := must.MustVal(appFactory())
+	must.MustVal(NewApplicationRunner(exampleApp)).Run()
 }
 
 // The ApplicationRunner object, that holds the application,
@@ -25,39 +25,51 @@ type ApplicationRunner struct {
 }
 
 // Create a new ApplicationRunner instance
-func NewApplicationRunner(wg *sync.WaitGroup, app LifecycleManager) (*ApplicationRunner, error) {
+func NewApplicationRunner(app LifecycleManager) (*ApplicationRunner, error) {
 
-	applicationRunner := &ApplicationRunner{wg: wg, app: app, config: Config{}}
+	appWg := &sync.WaitGroup{}
+	applicationRunner := &ApplicationRunner{wg: appWg, app: app, config: Config{}}
 
 	return applicationRunner, nil
 }
 
 // Run the application
-func (ar *ApplicationRunner) Run() chan os.Signal {
+func (ar *ApplicationRunner) Run() {
 
+	// Initialize the config structures of the runner and the application using default values, envirnonment variables and CLI arguments
 	cli.InitConfigs(os.Args, []cli.FlagSetFunc{ar.config.GetConfigFlagSet, ar.app.GetConfigFlagSet})
-	////log.Logger.Infof("ar.config: %v", ar.config)
 	log.SetLevelStr(ar.config.LogLevel)
 	log.Logger.Infof("ApplicationRunner Run")
 	ar.wg.Add(1)
 
+	// Start the liveness and readiness check
 	hc := must.MustVal(healthcheck.NewHealthCheck(ar.wg, healthcheck.Config{Port: uint(ar.config.HealthCheckPort), Checks: map[string]healthcheck.Check{
 		ar.config.LivenessCheckPath:  ar.livenessCheck,
 		ar.config.ReadinessCheckPath: ar.readinessCheck,
 	}}))
+
+	// Start the startup process of the application to run
 	hc.Startup()
 
-	// Start the application
-	ar.app.Startup()
+	// Execute the startup process of the application
+	ar.app.Startup(ar.wg)
 
 	// Setup graceful shutdown
-	return gsd.RegisterGsdCallback(ar.wg, func(s os.Signal) {
+	gsd.RegisterGsdCallback(ar.wg, func(s os.Signal) {
+		defer ar.wg.Done()
+
 		// Shuts down the application
 		log.Logger.Infof("ApplicationRunner GsdCallback called")
+
+		// Execute the shutdown process of the application
 		ar.app.Shutdown()
+
+		// Shut down the healthcheck services
 		hc.Shutdown()
-		ar.wg.Done()
 	})
+
+	// Wait until the application has shut down
+	ar.wg.Wait()
 }
 
 // The built-in livenessCheck callback function for the HealthCheck service

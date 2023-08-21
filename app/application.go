@@ -2,16 +2,13 @@ package app
 
 import (
 	"flag"
+	"sync"
 )
 
 // Generic Application life-cycle management functions
 type LifecycleManager interface {
 	GetConfigFlagSet(fs *flag.FlagSet)
-	Startup()
+	Startup(wg *sync.WaitGroup)
 	Shutdown()
 	Check() error
-}
-
-// Telemetry related functions
-type TelemetryProvider interface {
 }

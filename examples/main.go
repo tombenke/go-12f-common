@@ -6,6 +6,7 @@ import (
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
 	"sync"
+	"time"
 
 	"github.com/tombenke/go-12f-common/env"
 )
@@ -16,6 +17,7 @@ const (
 	ServerPortDefault = "8081"
 )
 
+// The configuration parameters of the ExampleApp
 type Config struct {
 	ServerPort int64
 }
@@ -35,9 +37,13 @@ func (a *ExampleApp) GetConfigFlagSet(fs *flag.FlagSet) {
 	a.config.GetConfigFlagSet(fs)
 }
 
-func (a *ExampleApp) Startup() {
+func (a *ExampleApp) Startup(wg *sync.WaitGroup) {
+	a.wg = wg
 	log.Logger.Infof("ExampleApp Startup")
-	////log.Logger.Infof("ar.app.config: %v", a.config)
+
+	// After 3 seconds set the application readiness status to O.K.
+	<-time.After(30 * time.Second)
+	a.err = nil
 }
 
 func (a *ExampleApp) Shutdown() {
@@ -49,18 +55,12 @@ func (a *ExampleApp) Check() error {
 	return a.err
 }
 
-func NewExampleApp(wg *sync.WaitGroup) (app.LifecycleManager, error) {
-	return &ExampleApp{wg: wg, err: healthcheck.ServiceNotAvailableError{}, config: Config{}}, nil
+func NewExampleApp() (app.LifecycleManager, error) {
+	return &ExampleApp{err: healthcheck.ServiceNotAvailableError{}, config: Config{}}, nil
 }
 
 func main() {
 
-	// Create a waitgroup for the application's sub-processes
-	appWg := sync.WaitGroup{}
-
 	// Make and run an application via ApplicationRunner
-	app.MakeAndRun(&appWg, NewExampleApp)
-
-	// Wait until the application has shut down
-	appWg.Wait()
+	app.MakeAndRun(NewExampleApp)
 }
