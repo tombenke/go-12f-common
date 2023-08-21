@@ -5,13 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tombenke/go-12f-common/env"
+	"os"
 )
 
 func TestGetEnvWithDefault(t *testing.T) {
 
 	defaultValue := "TEST_MISSING_STR_ENV_VAR value"
 	assert.Equal(t, defaultValue, env.GetEnvWithDefault("TEST_MISSING_STR_ENV_VAR", defaultValue))
-	assert.Equal(t, "TEST_STR_ENV_VAR value", env.GetEnvWithDefault("TEST_STR_ENV_VAR", ""))
+	strEnvVarValue := "TEST_STR_ENV_VAR value"
+	os.Setenv("TEST_STR_ENV_VAR", strEnvVarValue)
+	assert.Equal(t, strEnvVarValue, env.GetEnvWithDefault("TEST_STR_ENV_VAR", ""))
 }
 
 func TestGetEnvWithDefaultUint(t *testing.T) {

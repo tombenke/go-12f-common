@@ -71,14 +71,14 @@ tasks:
     desc: Run all the go tests.
     cmds:
       #- task: dc-upd
-      - go test ./... -count=1
+      - go test -count=1 ./...
       #- task: dc-down
 
   test-verbose:
     desc: Run all the go tests.
     cmds:
       #- task: dc-upd
-      - go test ./... -v -count=1
+      - go test -v -count=1 ./...
       #- task: dc-down
 
   test-single:
@@ -86,7 +86,7 @@ tasks:
     cmds:
       - task: format
       #- task: dc-upd
-      - go test ./... -run={{.CLI_ARGS}} -v -count=1 
+      - go test -v -count=1  -run={{.CLI_ARGS}} ./...
       #- task: dc-down
 
   benchmark:
