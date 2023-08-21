@@ -3,7 +3,7 @@ package app_test
 import (
 	"flag"
 	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/app"
+	"github.com/tombenke/go-12f-common/apprun"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
 	"github.com/tombenke/go-12f-common/must"

@@ -4,7 +4,7 @@
 .test.env
 
 # Binaries for programs and plugins
-examples/main
+examples/*/main
 *.exe
 *.exe~
 *.dll

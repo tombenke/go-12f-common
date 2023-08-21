@@ -1,6 +1,7 @@
 package app
 
 import (
+	"flag"
 	"github.com/tombenke/go-12f-common/cli"
 	"github.com/tombenke/go-12f-common/gsd"
 	"github.com/tombenke/go-12f-common/healthcheck"
@@ -9,6 +10,15 @@ import (
 	"os"
 	"sync"
 )
+
+// Generic Application life-cycle management functions
+// Every application must implement this interface that we want to run via ApplicationRunner
+type LifecycleManager interface {
+	GetConfigFlagSet(fs *flag.FlagSet)
+	Startup(wg *sync.WaitGroup)
+	Shutdown()
+	Check() error
+}
 
 // Wrapper function to make and run an application via ApplicationRunner
 func MakeAndRun(appFactory func() (LifecycleManager, error)) {
