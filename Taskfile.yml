@@ -1,0 +1,145 @@
+# https://taskfile.dev
+
+version: 3
+
+vars:
+  GIT_HOOKS_DIR:
+    sh: sh -c 'echo "$(pwd)/.git/hooks"'
+
+  UML_DIR: ./out/uml
+
+env:
+
+dotenv:
+  - .local.env
+  - .secrets
+  - .test.env
+
+tasks:
+  default:
+    desc: Executes all the tests then build the binary.
+    cmds:
+      - task: format
+      - task: lint
+      - task: test
+      - task: docs
+      - task: build
+
+  pre-commit:
+    desc: Runs the QA tasks from a git pre-commit hook
+    cmds:
+      - task: lint
+      - task: test
+
+  clean:
+    desc: Clean temporary files and folders
+    cmds:
+      - rm c.out
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - sh -c "$(curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh)" -- -b $(go env GOPATH)/bin v1.54.1
+      - go mod tidy
+      - task: install-git-hooks
+
+  install-git-hooks:
+    desc: Install git hooks
+    cmds:
+      - echo -e "#!/bin/bash\ntask pre-commit" > {{.GIT_HOOKS_DIR}}/pre-commit
+      - chmod ug+x {{.GIT_HOOKS_DIR}}/pre-commit
+
+  format:
+    desc: Autoformat the source files
+    cmds:
+      - gofmt -w .
+
+  lint-display:
+    desc: Call gofmt, go vet and go lint
+    cmds:
+      - go vet ./...
+      - golangci-lint run
+
+  lint:
+    desc: Test gofmt, go vet and go lint
+    cmds:
+      - test -z $(gofmt -d .)
+      - test -z $(go vet ./...)
+      - golangci-lint run
+
+  test:
+    desc: Run all the go tests.
+    cmds:
+      #- task: dc-upd
+      - go test ./... -count=1
+      #- task: dc-down
+
+  test-verbose:
+    desc: Run all the go tests.
+    cmds:
+      #- task: dc-upd
+      - go test ./... -v -count=1
+      #- task: dc-down
+
+  test-single:
+    desc: Run all the go tests in verbose mode from a single test file.
+    cmds:
+      - task: format
+      #- task: dc-upd
+      - go test ./... -run={{.CLI_ARGS}} -v -count=1 
+      #- task: dc-down
+
+  benchmark:
+    desc: Run benchmark tests (INACCURATE, run directly from cli!)
+    cmds:
+      - go test -bench=.
+
+  coverage:
+    desc: Open test coverage in browser
+    cmds:
+      - go test -coverprofile=c.out -covermode=atomic ./...
+      - go tool cover -html=c.out
+
+  build:
+    desc: Build the go binary.
+    cmds:
+      - go build -o examples/main examples/main.go
+
+  docs:
+    desc: Generate the documentation
+    cmds:
+
+      # Generate the UML diagrams
+      - mkdir -p {{.UML_DIR}}
+      - echo "TODO"
+
+#  # Docker test environment related tasks
+#  dc-up:
+#    desc: Start containers
+#    cmds:
+#      - docker-compose up
+#
+#  dc-upd:
+#    desc: Start containers in the background
+#    cmds:
+#      - docker-compose up -d
+#
+#  dc-stop:
+#    desc: Stop containers
+#    cmds:
+#      - docker-compose stop
+#
+#  dc-logs:
+#    desc: Get all container logs
+#    cmds:
+#      - docker-compose logs
+#
+#  dc-logsf:
+#    desc: Get all container logs and follow
+#    cmds:
+#      - docker-compose logs -f
+#
+#  dc-down:
+#    desc: Clean up containers
+#    cmds:
+#      - docker-compose down --volumes --remove-orphans
