@@ -34,6 +34,6 @@ func (a *Application) Check() error {
 	return a.err
 }
 
-func NewApplication() (app.LifecycleManager, error) {
+func NewApplication() (apprun.LifecycleManager, error) {
 	return &Application{err: healthcheck.ServiceNotAvailableError{}, config: Config{}}, nil
 }

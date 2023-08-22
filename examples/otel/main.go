@@ -7,5 +7,5 @@ import (
 func main() {
 
 	// Make and run an application via ApplicationRunner
-	app.MakeAndRun(NewApplication)
+	apprun.MakeAndRun(NewApplication)
 }

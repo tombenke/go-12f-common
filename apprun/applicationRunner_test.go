@@ -1,4 +1,4 @@
-package app_test
+package apprun_test
 
 import (
 	"flag"
@@ -18,7 +18,7 @@ type TestApp struct {
 	err error
 }
 
-func NewTestApp() (app.LifecycleManager, error) {
+func NewTestApp() (apprun.LifecycleManager, error) {
 	return &TestApp{err: healthcheck.ServiceNotAvailableError{}}, nil
 }
 
@@ -43,7 +43,7 @@ func (a *TestApp) Check() error {
 func TestApplicationRunner_StartStop(t *testing.T) {
 	testApp, newAppErr := NewTestApp()
 	assert.Nil(t, newAppErr)
-	appRunner, err := app.NewApplicationRunner(testApp)
+	appRunner, err := apprun.NewApplicationRunner(testApp)
 	assert.Nil(t, err)
 
 	go func() {
