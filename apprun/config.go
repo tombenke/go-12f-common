@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	"github.com/tombenke/go-12f-common/env"
+	"github.com/tombenke/go-12f-common/otel"
 )
 
 const (
@@ -43,6 +44,7 @@ type Config struct {
 	HealthCheckPort    int
 	LivenessCheckPath  string
 	ReadinessCheckPath string
+	OtelConfig         otel.Config
 }
 
 func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
@@ -67,5 +69,5 @@ func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
 	fs.StringVar(&cfg.ReadinessCheckPath, "readiness-check-path", env.GetEnvWithDefault(ReadinessCheckPathEnvVar, ReadinessCheckPathDefault), ReadinessCheckPathHelp)
 
 	// OTEL parameters
-	// TODO
+	cfg.OtelConfig.GetConfigFlagSet(fs)
 }
