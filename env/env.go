@@ -29,3 +29,14 @@ func GetEnvWithDefaultUint(envVarName string, defaultValueStr string) uint64 {
 	}
 	return value
 }
+
+// GetEnvWithDefaultBool gets the value of the `envVarName` environment variable and return with it as a `bool` type value.
+// If there is no such variable defined in the environment, then return with the `defaultValue`.
+func GetEnvWithDefaultBool(envVarName string, defaultValueStr string) bool {
+	strValue := GetEnvWithDefault(envVarName, defaultValueStr)
+	value, err := strconv.ParseBool(strValue)
+	if err != nil {
+		log.Logger.WithError(err).Errorf("conversion error of %s", strValue)
+	}
+	return value
+}
