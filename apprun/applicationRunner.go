@@ -49,6 +49,7 @@ func (ar *ApplicationRunner) Run() {
 	// Initialize the config structures of the runner and the application using default values, envirnonment variables and CLI arguments
 	cli.InitConfigs(os.Args, []cli.FlagSetFunc{ar.config.GetConfigFlagSet, ar.app.GetConfigFlagSet})
 	log.SetLevelStr(ar.config.LogLevel)
+	log.SetFormatterStr(ar.config.LogFormat)
 	log.Logger.Debugf("ar.config: %v", ar.config)
 	log.Logger.Infof("ApplicationRunner Run")
 	ar.wg.Add(1)
