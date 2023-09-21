@@ -33,6 +33,7 @@ func TestGetEnvWithDefaultUint(t *testing.T) {
 func TestGetEnvWithDefaultBool(t *testing.T) {
 
 	// Test with valid default value and valid env var
+	os.Setenv("TEST_BOOL_ENV_VAR", "false")
 	assert.Equal(t, false, env.GetEnvWithDefaultBool("TEST_BOOL_ENV_VAR", "true"))
 
 	// Test with valid default value and missing env var

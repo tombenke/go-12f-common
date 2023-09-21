@@ -24,7 +24,7 @@ jobs:
       - name: Run go setup task
         run: task install
 
-      - name: Run go test task
+      - name: Run go lint task
         run: task lint
 
       - name: Run go test task
