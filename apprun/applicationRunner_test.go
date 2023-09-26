@@ -46,12 +46,24 @@ func TestApplicationRunner_StartStop(t *testing.T) {
 	appRunner, err := apprun.NewApplicationRunner(testApp)
 	assert.Nil(t, err)
 
+	twg := &sync.WaitGroup{}
+
+	twg.Add(1)
 	go func() {
-		<-time.After(200 * time.Millisecond)
-		// Sent TERM signal
-		must.Must(syscall.Kill(syscall.Getpid(), syscall.SIGTERM))
+		log.Logger.Infof("Start the app runner in blocking mode, that will be killed after 200 msec")
+		appRunner.Run()
+		twg.Done()
 	}()
 
-	// Start the app runner in blocking mode, that will be killed after 200 msec
-	appRunner.Run()
+	twg.Add(1)
+	go func() {
+		log.Logger.Infof("Wait for 200 msec, then send TERM signal to the application")
+		<-time.After(2000 * time.Millisecond)
+		// Sent TERM signal
+		must.Must(syscall.Kill(syscall.Getpid(), syscall.SIGTERM))
+		twg.Done()
+	}()
+
+	log.Logger.Infof("Wait for the threads to finish")
+	twg.Wait()
 }
