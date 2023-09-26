@@ -16,10 +16,10 @@ jobs:
           go-version: "1.21"
 
       - name: Setup task
-        uses: Arduino/actions/setup-taskfile@master
+        arduino/setup-task@v1
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        actions/checkout@v2
 
       - name: Run go setup task
         run: task install

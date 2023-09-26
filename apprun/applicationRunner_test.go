@@ -58,7 +58,7 @@ func TestApplicationRunner_StartStop(t *testing.T) {
 	twg.Add(1)
 	go func() {
 		log.Logger.Infof("Wait for 200 msec, then send TERM signal to the application")
-		<-time.After(2000 * time.Millisecond)
+		<-time.After(200 * time.Millisecond)
 		// Sent TERM signal
 		must.Must(syscall.Kill(syscall.Getpid(), syscall.SIGTERM))
 		twg.Done()
