@@ -1,73 +1,83 @@
 package apprun
 
 import (
-	"flag"
+	"fmt"
+	"reflect"
+	"strings"
 
-	"github.com/tombenke/go-12f-common/env"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/tombenke/go-12f-common/otel"
 )
 
 const (
-	ShowHelpHelp    = "Show help message"
-	ShowHelpDefault = false
+	LogLevelDefault  = "info"
+	LogFormatDefault = "json"
 
-	PrintConfigHelp    = "Print configuration parameters"
-	PrintConfigEnvVar  = "PRINT_CONFIG"
-	PrintConfigDefault = false
-
-	logLevelHelp    = "The log level: panic | fatal | error | warning | info | debug | trace"
-	logLevelEnvVar  = "LOG_LEVEL"
-	defaultLogLevel = "info"
-
-	logFormatHelp    = "The log format: json | text"
-	logFormatEnvVar  = "LOG_FORMAT"
-	defaultLogFormat = "json"
-
-	HealthCheckPortHelp    = "The HTTP port of the healthcheck endpoints"
-	HealthCheckPortEnvVar  = "HEALTHCHECK_PORT"
-	HealthCheckPortDefault = "8080"
-
-	LivenessCheckPathHelp    = "The path of the liveness check endpoint"
-	LivenessCheckPathEnvVar  = "LIVENESS_CHECK_PATH"
-	LivenessCheckPathDefault = "/live"
-
-	ReadinessCheckPathHelp    = "The path of the readiness check endpoint"
-	ReadinessCheckPathEnvVar  = "READINESS_CHECK_PATH"
+	HealthCheckPortDefault    = 8080
+	LivenessCheckPathDefault  = "/live"
 	ReadinessCheckPathDefault = "/ready"
 )
 
+type Configurer interface {
+	GetConfigFlagSet(flagSet *pflag.FlagSet)
+	LoadConfig(flagSet *pflag.FlagSet) error
+}
+
 type Config struct {
-	LogLevel           string
-	LogFormat          string
-	ShowHelp           bool
-	PrintConfig        bool
-	HealthCheckPort    int
-	LivenessCheckPath  string
-	ReadinessCheckPath string
+	LogLevel           string `mapstructure:"log-level"`
+	LogFormat          string `mapstructure:"log-format"`
+	HealthCheckPort    uint   `mapstructure:"health-check-port"`
+	LivenessCheckPath  string `mapstructure:"liveness-check-path"`
+	ReadinessCheckPath string `mapstructure:"readiness-check-path"`
 	OtelConfig         otel.Config
 }
 
-func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
-
-	// Generic config parameters and CLI flags
-	fs.BoolVar(&cfg.ShowHelp, "h", ShowHelpDefault, ShowHelpHelp)
-	fs.BoolVar(&cfg.ShowHelp, "help", ShowHelpDefault, ShowHelpHelp)
-
-	fs.BoolVar(&cfg.PrintConfig, "p", PrintConfigDefault, PrintConfigHelp)
-	fs.BoolVar(&cfg.PrintConfig, "print-config", PrintConfigDefault, PrintConfigHelp)
-
-	// Logger parameters
-	fs.StringVar(&cfg.LogLevel, "l", env.GetEnvWithDefault(logLevelEnvVar, defaultLogLevel), logLevelHelp)
-	fs.StringVar(&cfg.LogLevel, "log-level", env.GetEnvWithDefault(logLevelEnvVar, defaultLogLevel), logLevelHelp)
-
-	fs.StringVar(&cfg.LogFormat, "f", env.GetEnvWithDefault(logFormatEnvVar, defaultLogFormat), logFormatHelp)
-	fs.StringVar(&cfg.LogFormat, "log-format", env.GetEnvWithDefault(logFormatEnvVar, defaultLogFormat), logFormatHelp)
+func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
+	flagSet.StringP(
+		"log-level",
+		"l",
+		LogLevelDefault,
+		"The log level: panic | fatal | error | warning | info | debug | trace",
+	)
+	flagSet.StringP("log-format", "f", LogFormatDefault, "The log format: json | text")
 
 	// HealthCheck parameters
-	fs.IntVar(&cfg.HealthCheckPort, "healthcheck-port", int(env.GetEnvWithDefaultUint(HealthCheckPortEnvVar, HealthCheckPortDefault)), HealthCheckPortHelp)
-	fs.StringVar(&cfg.LivenessCheckPath, "liveness-check-path", env.GetEnvWithDefault(LivenessCheckPathEnvVar, LivenessCheckPathDefault), LivenessCheckPathHelp)
-	fs.StringVar(&cfg.ReadinessCheckPath, "readiness-check-path", env.GetEnvWithDefault(ReadinessCheckPathEnvVar, ReadinessCheckPathDefault), ReadinessCheckPathHelp)
+	flagSet.Uint("health-check-port", HealthCheckPortDefault, "The HTTP port of the healthcheck endpoints")
+	flagSet.String("liveness-check-path", LivenessCheckPathDefault, "The path of the liveness check endpoint")
+	flagSet.String("readiness-check-path", ReadinessCheckPathDefault, "The path of the readiness check endpoint")
 
-	// OTEL parameters
-	cfg.OtelConfig.GetConfigFlagSet(fs)
+	cfg.OtelConfig.GetFlagSet(flagSet)
 }
+
+func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
+	if err := LoadConfigWithDefaultViper(flagSet, cfg); err != nil {
+		return err
+	}
+	return cfg.OtelConfig.LoadConfig(flagSet)
+}
+
+func NewDefaultViper(flagSet *pflag.FlagSet) (*viper.Viper, error) {
+	viper := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer("-", "_")))
+	if err := viper.BindPFlags(flagSet); err != nil {
+		return nil, fmt.Errorf("failed to bind flag set to config. %w", err)
+	}
+	viper.AutomaticEnv()
+	return viper, nil
+}
+
+func LoadConfigWithDefaultViper(flagSet *pflag.FlagSet, config any) error {
+	if reflect.ValueOf(config).Kind() != reflect.Ptr {
+		panic("config must be a pointer")
+	}
+	viper, err := NewDefaultViper(flagSet)
+	if err != nil {
+		return err
+	}
+	if err := viper.Unmarshal(config); err != nil {
+		return fmt.Errorf("failed to unmarshal into config. %w", err)
+	}
+	return nil
+}
+
+var _ Configurer = (*Config)(nil)

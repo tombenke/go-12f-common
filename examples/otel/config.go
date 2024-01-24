@@ -1,22 +1,40 @@
 package main
 
 import (
-	"flag"
-	"github.com/tombenke/go-12f-common/env"
+	"fmt"
+	"strings"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"github.com/tombenke/go-12f-common/apprun"
 )
 
 const (
 	ServerPortHelp    = "The HTTP port of the server"
-	ServerPortEnvVar  = "SERVER_PORT"
-	ServerPortDefault = "8081"
+	ServerPortDefault = 8081
 )
 
 // The configuration parameters of the ExampleApp
 type Config struct {
-	ServerPort int
+	ServerPort uint `mapstructure:"server-port"`
 }
 
-// Add application-specific config parameters to flagset
-func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
-	fs.IntVar(&cfg.ServerPort, "server-port", int(env.GetEnvWithDefaultUint(ServerPortEnvVar, ServerPortDefault)), ServerPortHelp)
+func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
+	flagSet.Uint("server-port", ServerPortDefault, ServerPortHelp)
+
 }
+
+func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
+	viper := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer("-", "_")))
+	if err := viper.BindPFlags(flagSet); err != nil {
+		return fmt.Errorf("failed to bind flag set to config. %w", err)
+	}
+	viper.AutomaticEnv()
+
+	if err := viper.Unmarshal(c); err != nil {
+		return fmt.Errorf("failed to unmarshal into simple application config. %w", err)
+	}
+	return nil
+}
+
+var _ apprun.Configurer = (*Config)(nil)
