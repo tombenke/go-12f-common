@@ -47,7 +47,7 @@ func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 	flagSet.String("liveness-check-path", LivenessCheckPathDefault, "The path of the liveness check endpoint")
 	flagSet.String("readiness-check-path", ReadinessCheckPathDefault, "The path of the readiness check endpoint")
 
-	cfg.OtelConfig.GetFlagSet(flagSet)
+	cfg.OtelConfig.GetConfigFlagSet(flagSet)
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {

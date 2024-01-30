@@ -33,7 +33,7 @@ type Config struct {
 	LogsExporter string `mapstructure:"logs-exporter"`
 }
 
-func (cfg *Config) GetFlagSet(flagSet *pflag.FlagSet) {
+func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {

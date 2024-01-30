@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"github.com/tombenke/go-12f-common/apprun"
 )
 
@@ -25,14 +23,8 @@ func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 }
 
 func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
-	viper := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer("-", "_")))
-	if err := viper.BindPFlags(flagSet); err != nil {
-		return fmt.Errorf("failed to bind flag set to simple application config. %w", err)
-	}
-	viper.AutomaticEnv()
-
-	if err := viper.Unmarshal(c); err != nil {
-		return fmt.Errorf("failed to unmarshal into simple application config. %w", err)
+	if err := apprun.LoadConfigWithDefaultViper(flagSet, c); err != nil {
+		return fmt.Errorf("failed to load otel config. %w", err)
 	}
 	return nil
 }
