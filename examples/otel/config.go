@@ -7,18 +7,13 @@ import (
 	"github.com/tombenke/go-12f-common/apprun"
 )
 
-const (
-	ServerPortHelp    = "The HTTP port of the server"
-	ServerPortDefault = 8081
-)
-
 // The configuration parameters of the ExampleApp
 type Config struct {
 	ServerPort uint `mapstructure:"server-port"`
 }
 
 func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
-	flagSet.Uint("server-port", ServerPortDefault, ServerPortHelp)
+	flagSet.Uint("server-port", 8081, "The HTTP port of the server")
 
 }
 
