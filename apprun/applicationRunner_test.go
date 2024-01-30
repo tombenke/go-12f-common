@@ -2,37 +2,43 @@ package apprun_test
 
 import (
 	"flag"
-	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/require"
+	"github.com/tombenke/go-12f-common/apprun"
+	"github.com/tombenke/go-12f-common/healthcheck"
+	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/must"
 )
+
+type Config struct{}
 
 type TestApp struct {
 	wg  *sync.WaitGroup
 	err error
 }
 
-func NewTestApp() (apprun.LifecycleManager, error) {
-	return &TestApp{err: healthcheck.ServiceNotAvailableError{}}, nil
+func NewTestApp() apprun.LifecycleManager {
+	return &TestApp{err: healthcheck.ServiceNotAvailableError{}}
 }
 
 func (a *TestApp) GetConfigFlagSet(fs *flag.FlagSet) {
 	log.Logger.Infof("TestApp GetConfigFlagSet")
 }
 
-func (a *TestApp) Startup(wg *sync.WaitGroup) {
+func (a *TestApp) Startup(wg *sync.WaitGroup) error {
 	log.Logger.Infof("TestApp Startup")
 	a.wg = wg
+	return nil
 }
 
-func (a *TestApp) Shutdown() {
+func (a *TestApp) Shutdown() error {
 	log.Logger.Infof("TestApp Shutdown")
+	return nil
 }
 
 func (a *TestApp) Check() error {
@@ -41,10 +47,13 @@ func (a *TestApp) Check() error {
 }
 
 func TestApplicationRunner_StartStop(t *testing.T) {
-	testApp, newAppErr := NewTestApp()
-	assert.Nil(t, newAppErr)
-	appRunner, err := apprun.NewApplicationRunner(testApp)
-	assert.Nil(t, err)
+	testApp := NewTestApp()
+
+	flagSet := pflag.NewFlagSet("root", pflag.ContinueOnError)
+	config := &apprun.Config{}
+	config.GetConfigFlagSet(flagSet)
+	require.NoError(t, config.LoadConfig(flagSet))
+	appRunner := apprun.NewApplicationRunner(config, testApp)
 
 	twg := &sync.WaitGroup{}
 

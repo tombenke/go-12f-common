@@ -1,22 +1,27 @@
 package main
 
 import (
-	"flag"
-	"github.com/tombenke/go-12f-common/env"
-)
+	"fmt"
 
-const (
-	ServerPortHelp    = "The HTTP port of the server"
-	ServerPortEnvVar  = "SERVER_PORT"
-	ServerPortDefault = "8081"
+	"github.com/spf13/pflag"
+	"github.com/tombenke/go-12f-common/apprun"
 )
 
 // The configuration parameters of the ExampleApp
 type Config struct {
-	ServerPort int
+	ServerPort uint `mapstructure:"server-port"`
 }
 
-// Add application-specific config parameters to flagset
-func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
-	fs.IntVar(&cfg.ServerPort, "server-port", int(env.GetEnvWithDefaultUint(ServerPortEnvVar, ServerPortDefault)), ServerPortHelp)
+func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
+	flagSet.Uint("server-port", 8081, "The HTTP port of the server")
+
 }
+
+func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
+	if err := apprun.LoadConfigWithDefaultViper(flagSet, c); err != nil {
+		return fmt.Errorf("failed to load otel config. %w", err)
+	}
+	return nil
+}
+
+var _ apprun.Configurer = (*Config)(nil)

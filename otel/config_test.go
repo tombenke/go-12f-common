@@ -1,22 +1,25 @@
 package otel_test
 
 import (
-	"flag"
-	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/otel"
 	"testing"
+
+	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/tombenke/go-12f-common/otel"
 )
 
 func TestOtelConfigWithDefaults(t *testing.T) {
 	config := otel.Config{}
-	fs := flag.NewFlagSet("test-fs", flag.ContinueOnError)
+	fs := pflag.NewFlagSet("test-fs", pflag.ContinueOnError)
 	config.GetConfigFlagSet(fs)
+	require.NoError(t, config.LoadConfig(fs))
 	assert.Equal(t, otel.Config{
-		ServiceName:          otel.ServiceNameDefault,
-		OtelTracesSampler:    otel.OtelTracesSamplerDefault,
-		OtelTracesSamplerArg: otel.OtelTracesSamplerArgDefault,
-		OtelTracesExporter:   otel.OtelTracesExporterDefault,
-		OtelMetricsExporter:  otel.OtelMetricsExporterDefault,
-		OtelLogsExporter:     otel.OtelLogsExporterDefault,
+		ServiceName:      otel.ConfigServiceNameDefault,
+		TracesSampler:    otel.ConfigTracesSamplerDefault,
+		TracesSamplerArg: otel.ConfigTracesSamplerArgDefault,
+		TracesExporter:   otel.ConfigTracesExporterDefault,
+		MetricsExporter:  otel.ConfigMetricsExporterDefault,
+		LogsExporter:     otel.ConfigLogsExporterDefault,
 	}, config)
 }

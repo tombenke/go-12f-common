@@ -1,22 +1,27 @@
 package main
 
 import (
-	"flag"
-	"github.com/tombenke/go-12f-common/env"
-)
+	"fmt"
+	"time"
 
-const (
-	StartupDelayHelp    = "The delay of startup process in seconds"
-	StartupDelayEnvVar  = "STARTUP_DELAY"
-	StartupDelayDefault = "30"
+	"github.com/spf13/pflag"
+	"github.com/tombenke/go-12f-common/apprun"
 )
 
 // The configuration parameters of the Application
 type Config struct {
-	StartupDelay int
+	StartupDelay time.Duration `mapstructure:"startup-delay"`
 }
 
-// Add application-specific config parameters to flagset
-func (cfg *Config) GetConfigFlagSet(fs *flag.FlagSet) {
-	fs.IntVar(&cfg.StartupDelay, "startup-delay", int(env.GetEnvWithDefaultUint(StartupDelayEnvVar, StartupDelayDefault)), StartupDelayHelp)
+func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
+	flagSet.Duration("startup-delay", 30*time.Second, "The delay of startup process")
 }
+
+func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
+	if err := apprun.LoadConfigWithDefaultViper(flagSet, c); err != nil {
+		return fmt.Errorf("failed to load otel config. %w", err)
+	}
+	return nil
+}
+
+var _ apprun.Configurer = (*Config)(nil)
