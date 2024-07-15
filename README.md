@@ -64,7 +64,7 @@ func main() {
 
 The `apprun.MakeAndRun()` does the following:
 
-1. Creates a newm application-level configuration aggregate object, that holds those parameters, that every application must have (e.g. health-check port, log-level, etc.).
+1. Creates a new application-level configuration aggregate object, that holds those parameters, that every application must have (e.g. health-check port, log-level, etc.).
 2. Resolves the configuration parameters to the application and its components.
 3. Calls the constructor function of the application with the complete, resolved configuration aggregate object.
 4. Set the log level and log format of the logger module,
