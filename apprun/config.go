@@ -19,9 +19,13 @@ const (
 	ReadinessCheckPathDefault = "/ready"
 )
 
-// Configurer defines the inteface for the application and its components that needs an kind of configurability
+// Configurer defines the interface for the application and its components that needs an kind of configurability
 type Configurer interface {
+	// GetConfigFlagSet is a factory function that receives a reference to a `pflag.FlagSet` object, to that it puts its configuration parameters
 	GetConfigFlagSet(flagSet *pflag.FlagSet)
+
+	// LoadConfig resolves the actual values of the configuration object.
+	// It takes into account the parameter definitions, the CLI and environment variables and the default values as well.
 	LoadConfig(flagSet *pflag.FlagSet) error
 }
 
