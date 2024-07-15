@@ -19,11 +19,15 @@ const (
 	ReadinessCheckPathDefault = "/ready"
 )
 
+// Configurer defines the inteface for the application and its components that needs an kind of configurability
 type Configurer interface {
 	GetConfigFlagSet(flagSet *pflag.FlagSet)
 	LoadConfig(flagSet *pflag.FlagSet) error
 }
 
+// Config represents the main configuration object of the 12-factor application instance
+// It holds those parameters that are needed to setup the basic functionalities of the application,
+// e.g. logging, healthcheck, levness and readiness checks.
 type Config struct {
 	LogLevel           string `mapstructure:"log-level"`
 	LogFormat          string `mapstructure:"log-format"`
@@ -33,6 +37,7 @@ type Config struct {
 	OtelConfig         otel.Config
 }
 
+// GetConfigFlagSet() initializes the configuration object of the 12-factor application, and returns with it
 func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 	flagSet.StringP(
 		"log-level",
@@ -80,4 +85,5 @@ func LoadConfigWithDefaultViper(flagSet *pflag.FlagSet, config any) error {
 	return nil
 }
 
+// Ensure that Config implements the Configurer interface
 var _ Configurer = (*Config)(nil)

@@ -12,15 +12,21 @@ import (
 	"github.com/tombenke/go-12f-common/must"
 )
 
-// Generic Application life-cycle management functions
+// LifecycleManager is an interface that defines the application's life-cycle management functions.
 // Every application must implement this interface that we want to run via ApplicationRunner
 type LifecycleManager interface {
+	// Startup() Starts the application and its internal components, by calling their Startup() method.
 	Startup(wg *sync.WaitGroup) error
+
+	// Shutdown() Shuts down the internal components, by calling their Shutdown() method, then shuts down the application as well.
 	Shutdown() error
+
+	// Check() is called by the healthcheck API. If this function returns with nil that means the appication or component is healthy.
+	// If it returns with any error, that means the application or component is either sick, or yet not ready for working.
 	Check() error
 }
 
-// Wrapper function to make and run an application via ApplicationRunner
+// MakeAndRun() is a wrapper function to make and run an application via ApplicationRunner
 func MakeAndRun[T Configurer](appConfig T, appFactory func(T) (LifecycleManager, error)) error {
 	rootCmd := &cobra.Command{}
 	config := &Config{}
@@ -49,7 +55,7 @@ func MakeAndRun[T Configurer](appConfig T, appFactory func(T) (LifecycleManager,
 	return nil
 }
 
-// The ApplicationRunner object, that holds the application,
+// ApplicationRunner is the object, that holds the application,
 // and all the supporting components that are needed for a 12-factor application
 type ApplicationRunner struct {
 	config *Config
@@ -57,7 +63,7 @@ type ApplicationRunner struct {
 	wg     *sync.WaitGroup
 }
 
-// Create a new ApplicationRunner instance
+// NewApplicationRunner creates a new ApplicationRunner instance
 func NewApplicationRunner(config *Config, app LifecycleManager) *ApplicationRunner {
 	return &ApplicationRunner{
 		config: config,
@@ -66,7 +72,8 @@ func NewApplicationRunner(config *Config, app LifecycleManager) *ApplicationRunn
 	}
 }
 
-// Run the application
+// Run() runs the application, that means it calls the Startup() method of the application instance,
+// and steps into the execution loop, that runs until the application receives signal to shut it down.
 func (ar *ApplicationRunner) Run() {
 	// Initialize the config structures of the runner and the application using default values, envirnonment variables and CLI arguments
 	log.SetLevelStr(ar.config.LogLevel)
@@ -107,13 +114,13 @@ func (ar *ApplicationRunner) Run() {
 	ar.wg.Wait()
 }
 
-// The built-in livenessCheck callback function for the HealthCheck service
+// livenessCheck() is the built-in livenessCheck callback function for the HealthCheck service
 func (ar *ApplicationRunner) livenessCheck() error {
 	// TODO: May add checks for heap-size, go routine num limit, etc.
 	return nil
 }
 
-// The built-in readinessCheck callback function for the HealthCheck service
+// readinessCheck() is the built-in readinessCheck callback function for the HealthCheck service
 func (ar *ApplicationRunner) readinessCheck() error {
 	return ar.app.Check()
 }
