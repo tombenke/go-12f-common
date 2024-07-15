@@ -76,6 +76,42 @@ The `apprun.MakeAndRun()` does the following:
 10. Calls the `Shutdown()` memthod of the application, that is responsible to call further the `Shutdown()` function of its internal components.
 11. When all internal components has been successfully stopped, the application terminates.
 
+The `"github.com/tombenke/go-12f-common/log"` package provides a global logger object, the `log.Logger`.
+It is a [Logrus](https://github.com/sirupsen/logrus) structured logger that the package automatically instantiate, and configure when the application starts.
+
+The application-level configuration parameters of the logger:
+
+The log level:
+- cli parameter: `--log-level`.
+- env. variable: `LOG_LEVEL`.
+- type: String. One of `panic, fatal, error, warning, info, debug, trace`.
+- default value: `info`.
+
+Log format:
+- cli parameter: `--log-format`.
+- env. variable: `LOG_FORMAT`.
+- type: String. One of `json, text`.
+- default value: `json`.
+
+
+The application-level configuration parameters of the health-check endpoints:
+
+Health-Check Port:
+- cli parameter: `--health-check-port`
+- env. variable: `--HEALTH_CHECK_PORT`
+- default: `8080`.
+	
+Liveness-Check Path:
+- cli parameter: `--liveness-check-path`.
+- env. variable: `LIVENESS_CHECK_PATH`.
+- default: `"/live"`.
+
+Readiness-Check Path
+- cli parameter: `--readiness-check-path`.
+- env. variable: `READINESS_CHECK_PATH`.
+- default: `"/ready"`.
+
+
 ## Development
 
 Clone the repository, then install the dependencies and the development tools:
