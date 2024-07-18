@@ -118,6 +118,8 @@ It is the system components' decision and responsibility how many subprocesses i
 
 A typical pattern to implement this, to have a local channel inside the system component, that it shares with the subprocesses that is forks, then the subprocesses will do their job, until this channel is not closed. The only think the system component has to do in its `Shutdown()` method is, to close this channel.
 
+See the [examples/scheduler](examples/scheduler/) as a sample for more details in this topic.
+
 ## Development
 
 Clone the repository, then install the dependencies and the development tools:
