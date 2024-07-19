@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/examples/scheduler/scheduler"
 	"github.com/tombenke/go-12f-common/examples/scheduler/timer"
+	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
 	"github.com/tombenke/go-12f-common/must"
@@ -75,7 +75,7 @@ func NewApplication(config *Config) (apprun.LifecycleManager, error) {
 		err:    healthcheck.ServiceNotAvailableError{},
 		components: []apprun.LifecycleManager{
 			must.MustVal(timer.NewTimer(&config.timer, currentTimeCh)),
-			must.MustVal(scheduler.NewScheduler(&config.scheduler, currentTimeCh)),
+			must.MustVal(worker.NewWorker(&config.worker, currentTimeCh)),
 		},
 	}, nil
 }

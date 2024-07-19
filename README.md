@@ -136,7 +136,10 @@ task list
 
 ## The examples
 
-There are examples about the usage of the package in the [examples/](examples/) directory.
+There are examples about the usage of the package in the [examples/](examples/) directory:
+
+- [examples/simple](examples/simple/): Is a bare-minimum 12-factor application, that is build on top of the go-12f-common package.
+- [examples/scheduler](examples/scheduler/): Demonstrates how to implement concurrent, communication processes as system components.
 
 Build the binaries of the examples:
 
@@ -147,10 +150,18 @@ Build the binaries of the examples:
 Then run it:
 
 ```bash
-    cd examples/simple
-    ./main
+    examples/simple/main
+```
+
+or
+
+```bash
+    examples/scheduler/main --time-step 5s -l debug
 ```
 
 ## References
 
+- [12-factor principles](https://12factor.net/)
 - [Health Check Response Format for HTTP APIs](https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check-06)
+- [Cobra](https://cobra.dev/)
+- [Viper](https://github.com/spf13/viper)

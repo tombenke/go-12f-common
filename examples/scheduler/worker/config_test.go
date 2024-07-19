@@ -1,4 +1,4 @@
-package scheduler
+package worker
 
 import (
 	"github.com/stretchr/testify/assert"

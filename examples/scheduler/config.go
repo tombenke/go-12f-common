@@ -5,19 +5,19 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/examples/scheduler/scheduler"
 	"github.com/tombenke/go-12f-common/examples/scheduler/timer"
+	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
 	"go.uber.org/multierr"
 )
 
 // The configuration parameters of the Application
 type Config struct {
-	scheduler scheduler.Config
-	timer     timer.Config
+	worker worker.Config
+	timer  timer.Config
 }
 
 func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
-	c.scheduler.GetConfigFlagSet(flagSet)
+	c.worker.GetConfigFlagSet(flagSet)
 	c.timer.GetConfigFlagSet(flagSet)
 }
 
@@ -27,7 +27,7 @@ func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
 	}
 	return multierr.Combine(
 		c.timer.LoadConfig(flagSet),
-		c.scheduler.LoadConfig(flagSet),
+		c.worker.LoadConfig(flagSet),
 	)
 }
 
