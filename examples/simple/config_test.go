@@ -1,24 +1,26 @@
-package timer
+package main
 
 import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tombenke/go-12f-common/must"
 )
 
 func Test_Config_GetConfigFlagSet(t *testing.T) {
-	const EXPECTED_TIME_STEP_FROM_ENV_VAR = "env_10s"
-	const EXPECTED_TIME_STEP_FROM_CLI_ARG = "cli_10s"
+	const EXPECTED_STARTUP_DELAY_FROM_ENV_VAR = "10s"
+	const EXPECTED_STARTUP_DELAY_FROM_CLI_ARG = "20s"
 
 	envVars := map[string]string{
-		"TIME_STEP": EXPECTED_TIME_STEP_FROM_ENV_VAR,
+		"STARTUP_DELAY": EXPECTED_STARTUP_DELAY_FROM_ENV_VAR,
 	}
 	cliArgs := []string{
-		fmt.Sprintf("--%v=%v", TIME_STEP_ARG_NAME, EXPECTED_TIME_STEP_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", STARTUP_DELAY_ARG_NAME, EXPECTED_STARTUP_DELAY_FROM_CLI_ARG),
 	}
 	testCases := map[string]struct {
 		expectedConfig Config
@@ -27,24 +29,24 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 	}{
 		"default values": {
 			expectedConfig: Config{
-				TimeStep: TIME_STEP_DEFAULT,
+				StartupDelay: STARTUP_DELAY_DEFAULT,
 			},
 		},
 		"from environment variables": {
 			expectedConfig: Config{
-				TimeStep: EXPECTED_TIME_STEP_FROM_ENV_VAR,
+				StartupDelay: must.MustVal(time.ParseDuration(EXPECTED_STARTUP_DELAY_FROM_ENV_VAR)),
 			},
 			envVars: envVars,
 		},
 		"from cli args": {
 			expectedConfig: Config{
-				TimeStep: EXPECTED_TIME_STEP_FROM_CLI_ARG,
+				StartupDelay: must.MustVal(time.ParseDuration(EXPECTED_STARTUP_DELAY_FROM_CLI_ARG)),
 			},
 			cliArgs: cliArgs,
 		},
 		"prefer cli args over env vars": {
 			expectedConfig: Config{
-				TimeStep: EXPECTED_TIME_STEP_FROM_CLI_ARG,
+				StartupDelay: must.MustVal(time.ParseDuration(EXPECTED_STARTUP_DELAY_FROM_CLI_ARG)),
 			},
 			envVars: envVars,
 			cliArgs: cliArgs,
