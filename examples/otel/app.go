@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 
 	"github.com/tombenke/go-12f-common/apprun"
@@ -14,20 +15,20 @@ type Application struct {
 	err    error
 }
 
-func (a *Application) Startup(wg *sync.WaitGroup) error {
+func (a *Application) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	a.wg = wg
 	log.Logger.Infof("Application Startup")
 	a.err = nil
 	return nil
 }
 
-func (a *Application) Shutdown() error {
+func (a *Application) Shutdown(ctx context.Context) error {
 	log.Logger.Infof("Application Shutdown")
 	a.err = healthcheck.ServiceNotAvailableError{}
 	return nil
 }
 
-func (a *Application) Check() error {
+func (a *Application) Check(ctx context.Context) error {
 	log.Logger.Infof("Application Check")
 	return a.err
 }

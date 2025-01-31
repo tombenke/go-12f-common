@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
-	"golang.org/x/exp/maps"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/slog"
+	"golang.org/x/exp/maps"
 )
 
-type ServiceNotAvailableError struct {
-}
+type ServiceNotAvailableError struct{}
 
 func (e ServiceNotAvailableError) Error() string {
 	return "Service is not available"
@@ -27,7 +27,7 @@ type HealthCheck struct {
 }
 
 // Check is a health/readiness checker function
-type Check func() error
+type Check func(ctx context.Context) error
 
 type Config struct {
 	Port   uint
@@ -35,23 +35,24 @@ type Config struct {
 }
 
 // Create a HealthCheck instance
-func NewHealthCheck(wg *sync.WaitGroup, config Config) (*HealthCheck, error) {
-	return &HealthCheck{wg: wg, config: config}, nil
+func NewHealthCheck(wg *sync.WaitGroup, config Config) HealthCheck {
+	return HealthCheck{wg: wg, config: config}
 }
 
 // Setup the Healtcheck services and start listening on the HealtCheck port
-func (h *HealthCheck) Startup() {
-	log.Logger.Infof("HealthCheck services Startup")
+func (h *HealthCheck) Startup(ctx context.Context) {
+	logger := slog.GetFromContextOrDefault(ctx).With("component", "HealthCheck")
+	logger.Info("Starting up")
 	started := time.Now()
 	mux := http.NewServeMux()
 
 	for path, check := range h.config.Checks {
-		log.Logger.Debugf("HealthCheck add endpoint: %s, %v", path, check)
+		logger.Debug("Adding endpoint", "path", path)
 		endpointPath := path
 		checkFun := check
 		mux.HandleFunc(endpointPath, func(w http.ResponseWriter, r *http.Request) {
 			checkResults := make(map[string]string)
-			err := checkFun()
+			err := checkFun(ctx)
 			status := http.StatusOK
 			if err != nil {
 				// write out the response code and content type header
@@ -81,30 +82,30 @@ func (h *HealthCheck) Startup() {
 	go func() {
 		err := h.server.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
-			log.Logger.Info("HealthCheck server is closed")
+			logger.Info("Server closed")
 		} else if err != nil {
-			log.Logger.Errorf("error listening for HealthCheck server: %s", err)
+			logger.Error("Error listening for server", "error", err)
 		}
 		cancelCtx()
 	}()
 
-	h.waitUntilServerStarted()
+	h.waitUntilServerStarted(logger)
 }
 
-func (h *HealthCheck) waitUntilServerStarted() {
+func (h *HealthCheck) waitUntilServerStarted(logger *slog.Logger) {
 	if len(h.config.Checks) > 0 {
 		for {
 			time.Sleep(10 * time.Millisecond)
 
-			log.Logger.Info("Checking if HealthCheck server started...")
+			logger.Info("Checking if server started...")
 			resp, err := http.Get(fmt.Sprintf("http://localhost:%d%s", h.config.Port, maps.Keys(h.config.Checks)[0]))
 			if err != nil {
-				log.Logger.Errorf("HealthCheck server check failed: %s", err)
+				logger.Error("Server check failed", "error", err)
 				continue
 			}
 			resp.Body.Close()
 			if resp.StatusCode != http.StatusOK {
-				log.Logger.Errorf("HealthCheck server response is Not OK: %d", resp.StatusCode)
+				logger.Error("Server response is not OK", "statusCode", resp.StatusCode)
 				continue
 			}
 
@@ -112,12 +113,12 @@ func (h *HealthCheck) waitUntilServerStarted() {
 			break
 		}
 	}
-	log.Logger.Info("HealthCheck is up and running!")
+	logger.Info("HealthCheck is up and running!")
 }
 
 // Shut down the HealtCheck services
-func (h *HealthCheck) Shutdown() {
+func (h *HealthCheck) Shutdown(ctx context.Context) {
 	defer h.wg.Done()
-	log.Logger.Infof("HealthCheck services Shutdown")
+	slog.InfoContext(ctx, "Shutdown", "component", "HealthCheck")
 	must.Must(h.server.Shutdown(context.Background()))
 }

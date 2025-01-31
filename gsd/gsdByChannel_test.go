@@ -1,12 +1,14 @@
 package gsd
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/log"
+	"context"
 	"os"
 	"sync"
 	"syscall"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tombenke/go-12f-common/log"
 )
 
 func TestRegisterByChannel(t *testing.T) {
@@ -17,7 +19,7 @@ func TestRegisterByChannel(t *testing.T) {
 	wg := sync.WaitGroup{}
 
 	// Register the callback handler
-	sigsCh := RegisterGsdCallback(&wg, func(s os.Signal) {
+	sigsCh := RegisterGsdCallback(context.Background(), &wg, func(s os.Signal) {
 		mu.Lock()
 		gsdCbCalled = true
 		mu.Unlock()

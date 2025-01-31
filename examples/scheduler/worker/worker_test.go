@@ -1,30 +1,31 @@
 package worker
 
 import (
-	"github.com/spf13/pflag"
-	"github.com/stretchr/testify/assert"
+	"context"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/require"
 )
 
 // Create a Worker
 func createWorker(t *testing.T) (*Worker, *sync.WaitGroup) {
-	worker, err := NewWorker(
+	worker := NewWorker(
 		&Config{},
 		make(chan time.Time),
 	)
-	assert.Nil(t, err)
 	fs := &pflag.FlagSet{}
 	worker.GetConfigFlagSet(fs)
 	wg := &sync.WaitGroup{}
-	worker.Startup(wg)
+	require.NoError(t, worker.Startup(context.Background(), wg))
 	return worker, wg
 }
 
 // Create, Start and stop a worker instance
 func TestWorkerStartStop(t *testing.T) {
 	worker, wg := createWorker(t)
-	worker.Shutdown()
+	require.NoError(t, worker.Shutdown(context.Background()))
 	wg.Wait()
 }

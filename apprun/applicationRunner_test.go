@@ -1,6 +1,7 @@
 package apprun_test
 
 import (
+	"context"
 	"flag"
 	"sync"
 	"syscall"
@@ -30,18 +31,18 @@ func (a *TestApp) GetConfigFlagSet(fs *flag.FlagSet) {
 	log.Logger.Infof("TestApp GetConfigFlagSet")
 }
 
-func (a *TestApp) Startup(wg *sync.WaitGroup) error {
+func (a *TestApp) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	log.Logger.Infof("TestApp Startup")
 	a.wg = wg
 	return nil
 }
 
-func (a *TestApp) Shutdown() error {
+func (a *TestApp) Shutdown(ctx context.Context) error {
 	log.Logger.Infof("TestApp Shutdown")
 	return nil
 }
 
-func (a *TestApp) Check() error {
+func (a *TestApp) Check(ctx context.Context) error {
 	log.Logger.Infof("TestApp Check")
 	return a.err
 }
@@ -60,7 +61,7 @@ func TestApplicationRunner_StartStop(t *testing.T) {
 	twg.Add(1)
 	go func() {
 		log.Logger.Infof("Start the app runner in blocking mode, that will be killed after 200 msec")
-		appRunner.Run()
+		require.NoError(t, appRunner.Run())
 		twg.Done()
 	}()
 

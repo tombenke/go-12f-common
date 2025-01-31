@@ -1,11 +1,13 @@
 package gsd
 
 import (
-	"github.com/stretchr/testify/assert"
+	"context"
 	"os"
 	"sync"
 	"syscall"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRegisterByKill(t *testing.T) {
@@ -15,7 +17,7 @@ func TestRegisterByKill(t *testing.T) {
 	wg := sync.WaitGroup{}
 
 	// Register the callback handler
-	RegisterGsdCallback(&wg, func(s os.Signal) {
+	RegisterGsdCallback(context.Background(), &wg, func(s os.Signal) {
 		mu.Lock()
 		gsdCbCalled = true
 		mu.Unlock()

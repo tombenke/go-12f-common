@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
 )
 
 type Application struct {
@@ -22,7 +22,7 @@ type Application struct {
 	components []apprun.LifecycleManager
 }
 
-func (a *Application) Startup(wg *sync.WaitGroup) error {
+func (a *Application) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	log.Logger.Infof("Application Startup")
 
 	// Inject the central waitgroup into the application object
@@ -30,17 +30,20 @@ func (a *Application) Startup(wg *sync.WaitGroup) error {
 
 	// Startup the internal components
 	for c := range a.components {
-		a.components[c].Startup(a.wg)
+		if err := a.components[c].Startup(context.Background(), a.wg); err != nil {
+			return err
+		}
+
 	}
 
 	// Check if Application is ready to serve service calls
-	_ = a.Check()
+	_ = a.Check(context.Background())
 
 	a.err = nil
 	return nil
 }
 
-func (a *Application) Shutdown() error {
+func (a *Application) Shutdown(ctx context.Context) error {
 	log.Logger.Infof("Application Shutdown")
 	a.closeChannels()
 
@@ -48,7 +51,10 @@ func (a *Application) Shutdown() error {
 
 	// Shutdown the internal components
 	for c := range a.components {
-		a.components[c].Shutdown()
+		if err := a.components[c].Shutdown(context.Background()); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
@@ -60,7 +66,7 @@ func (a *Application) closeChannels() {
 	}
 }
 
-func (a *Application) Check() error {
+func (a *Application) Check(ctx context.Context) error {
 	log.Logger.Infof("Application Check")
 	return a.err
 }
@@ -74,8 +80,8 @@ func NewApplication(config *Config) (apprun.LifecycleManager, error) {
 		config: config,
 		err:    healthcheck.ServiceNotAvailableError{},
 		components: []apprun.LifecycleManager{
-			must.MustVal(timer.NewTimer(&config.timer, currentTimeCh)),
-			must.MustVal(worker.NewWorker(&config.worker, currentTimeCh)),
+			timer.NewTimer(&config.timer, currentTimeCh),
+			worker.NewWorker(&config.worker, currentTimeCh),
 		},
 	}, nil
 }
