@@ -60,26 +60,30 @@ func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
-	if err := LoadConfigWithDefaultViper(flagSet, cfg); err != nil {
+	if err := LoadConfigWithDefaultViper(flagSet, cfg, "apprun"); err != nil {
 		return err
 	}
 	return cfg.OtelConfig.LoadConfig(flagSet)
 }
 
-func NewDefaultViper(flagSet *pflag.FlagSet) (*viper.Viper, error) {
+func NewDefaultViper(flagSet *pflag.FlagSet, app string) (*viper.Viper, error) {
 	viper := viper.NewWithOptions(viper.EnvKeyReplacer(strings.NewReplacer("-", "_")))
 	if err := viper.BindPFlags(flagSet); err != nil {
 		return nil, fmt.Errorf("failed to bind flag set to config. %w", err)
 	}
 	viper.AutomaticEnv()
+	viper.SetConfigName(app)    // name of config file (without extension)
+	viper.SetConfigType("yaml") // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")
+	viper.ReadInConfig()
 	return viper, nil
 }
 
-func LoadConfigWithDefaultViper(flagSet *pflag.FlagSet, config any) error {
+func LoadConfigWithDefaultViper(flagSet *pflag.FlagSet, config any, app string) error {
 	if reflect.ValueOf(config).Kind() != reflect.Ptr {
 		panic("config must be a pointer")
 	}
-	viper, err := NewDefaultViper(flagSet)
+	viper, err := NewDefaultViper(flagSet, app)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,4 @@
+process-min-duration: 1s
+process-max-duration: 10s
+tracer-url: "http://localhost:4318/otlp/v1/traces"
+tracer-tenant: "tcoe_o11y"

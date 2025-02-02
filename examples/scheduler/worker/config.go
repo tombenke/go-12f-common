@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/apprun"
 )
@@ -17,7 +18,7 @@ func (cfg *Config) GetConfigFlagSet(fs *pflag.FlagSet) {
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
-	if err := apprun.LoadConfigWithDefaultViper(flagSet, cfg); err != nil {
+	if err := apprun.LoadConfigWithDefaultViper(flagSet, cfg, "scheduler_worker"); err != nil {
 		return fmt.Errorf("failed to load worker config. %w", err)
 	}
 	return nil

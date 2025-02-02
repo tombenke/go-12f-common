@@ -1,0 +1,4 @@
+enqueue-items: 10
+enqueue-timeout: 3s
+tracer-url: "http://localhost:4318/otlp/v1/traces"
+tracer-tenant: "tcoe_o11y"
