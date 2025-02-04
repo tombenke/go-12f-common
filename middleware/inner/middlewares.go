@@ -5,10 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"runtime/debug"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	metric_api "go.opentelemetry.io/otel/metric"
@@ -60,12 +60,12 @@ func Span[T any](tr trace.Tracer, spanName string) InternalMiddleware[T] {
 			)
 			defer spanChild.End()
 
-			logFields := logrus.Fields{}
+			logFields := []any{}
 			if !spanParent.IsValid() {
-				logFields["traceID"] = spanChild.SpanContext().TraceID().String()
+				logFields = append(logFields, "traceID", spanChild.SpanContext().TraceID().String())
 			}
-			logFields["spanID"] = spanChild.SpanContext().SpanID().String()
-			ctx, _ = logger.FromContext(ctx, logFields)
+			logFields = append(logFields, "spanID", spanChild.SpanContext().SpanID().String())
+			ctx, _ = logger.FromContext(ctx, logFields...)
 
 			t, err := next(ctx)
 			if err != nil {
@@ -118,21 +118,26 @@ func tryCatch(f func()) func() error {
 
 // Logger is a middleware for logging begin and end messages.
 // A new logger with values is added to the context.
-func Logger[T any](values logrus.Fields, beginLevel logrus.Level, endLevel logrus.Level) InternalMiddleware[T] {
+func Logger[T any](values map[string]string, beginLevel slog.Level, endLevel slog.Level) InternalMiddleware[T] {
+	logValues := make([]any, 0, len(values)*2)
+	for k, v := range values {
+		logValues = append(logValues, k, v)
+	}
+
 	return func(next InternalMiddlewareFn[T]) InternalMiddlewareFn[T] {
 		return func(ctx context.Context) (T, error) {
-			var log logger.FieldLogger
+			var log *slog.Logger
 			var err error
-			ctx, log = logger.FromContext(ctx, values)
-			log.Log(beginLevel, "INT_BEGIN")
+			ctx, log = logger.FromContext(ctx, logValues...)
+			log.Log(ctx, beginLevel, "INT_BEGIN")
 			beginTS := time.Now()
 			defer func() {
 				elapsedSec := time.Since(beginTS).Seconds()
-				args := logrus.Fields{"duration": fmt.Sprintf("%.3f", elapsedSec)}
+				args := []any{"duration", fmt.Sprintf("%.3f", elapsedSec)}
 				if err != nil {
-					args[logger.KeyError] = err
+					args = append(args, logger.KeyError, err)
 				}
-				log.WithFields(args).Log(endLevel, "INT_END")
+				log.With(args...).Log(ctx, endLevel, "INT_END")
 			}()
 
 			retVal, err := next(ctx)
@@ -155,19 +160,19 @@ Metrics is a middleware to make count and duration report
 func Metrics[T any](ctx context.Context, meter metric_api.Meter, name string,
 	description string, attributes map[string]string, errFormatter middleware.ErrFormatter,
 ) InternalMiddleware[T] {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
+	_, log := logger.FromContext(ctx)
 	baseAttrs := make([]attribute.KeyValue, 0, len(attributes))
 	for aKey, aVal := range attributes {
 		baseAttrs = append(baseAttrs, attribute.Key(aKey).String(aVal))
 	}
 	attempted, err := middleware.Int64CounterGetInstrument(name, metric_api.WithDescription(description))
 	if err != nil {
-		log.WithFields(logrus.Fields{logger.KeyError: err, "metricName": name}).Error("unable to instantiate counter")
+		log.Error("unable to instantiate counter", logger.KeyError, err, "metricName", name)
 		panic(err)
 	}
 	durationSum, err := middleware.Float64CounterGetInstrument(name+"_duration", metric_api.WithDescription(description+", duration sum"), metric_api.WithUnit("s"))
 	if err != nil {
-		log.WithFields(logrus.Fields{logger.KeyError: err, "metricName": name}).Error("unable to instantiate time counter")
+		log.Error("unable to instantiate time counter", logger.KeyError, err, "metricName", name)
 		panic(err)
 	}
 

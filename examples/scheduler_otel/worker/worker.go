@@ -3,12 +3,12 @@ package worker
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"math/rand"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -47,7 +47,7 @@ var (
 
 // Create a new Worker instance
 func NewWorker(rootCtx context.Context, config *Config, currentTimeCh chan timer.TimerRequest) (*Worker, error) {
-	rootCtx, _ = logger.FromContext(rootCtx, logrus.Fields{logger.KeyService: ComponentName})
+	rootCtx, _ = logger.FromContext(rootCtx, logger.KeyService, ComponentName)
 	return &Worker{
 		config:    config,
 		err:       healthcheck.ServiceNotAvailableError{},
@@ -65,11 +65,11 @@ func (t *Worker) GetConfigFlagSet(fs *pflag.FlagSet) {
 
 // Startup the Worker component
 func (t *Worker) Startup(wg *sync.WaitGroup) error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
+	_, log := logger.FromContext(t.rootCtx)
 	t.appWg = wg
 	wg.Add(1)
-	log.Debugf("Worker: Startup")
-	log.Debugf("Worker: config: %+v", t.config)
+	log.Debug("Worker: Startup")
+	log.Debug("Worker", "config", t.config)
 
 	var err error
 	t.tr, t.trDefer, err = t.InitTracer(context.Background(), t.config.TracerUrl)
@@ -82,8 +82,8 @@ func (t *Worker) Startup(wg *sync.WaitGroup) error {
 
 // Shutdown the Worker Component
 func (t *Worker) Shutdown() error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
-	log.Debugf("Worker: Shutdown")
+	_, log := logger.FromContext(t.rootCtx)
+	log.Debug("Worker: Shutdown")
 
 	// The components is ready any more
 	t.err = healthcheck.ServiceNotAvailableError{}
@@ -97,9 +97,9 @@ func (t *Worker) Shutdown() error {
 
 // Run the component's processing logic within this function as a go-routine
 func (t *Worker) Run() {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
+	ctx, log := logger.FromContext(t.rootCtx)
 	defer t.appWg.Done()
-	defer log.Debugf("Worker: Stopped")
+	defer log.Debug("Worker: Stopped")
 	jobNum := 0
 
 	// The component is working properly
@@ -114,34 +114,32 @@ func (t *Worker) Run() {
 				log.Error("Worker: ", logger.KeyError, err)
 			} else {
 				stat, err := t.runBusinessLogic(timerRequest.Ctx, timerRequest.JobID)
-				logLevel := logrus.InfoLevel
+				logLevel := slog.LevelInfo
 				if err != nil {
-					logLevel = logrus.ErrorLevel
+					logLevel = slog.LevelError
 				}
-				log.WithFields(logrus.Fields{
-					"duration": stat.Duration, logger.KeyError: err,
-				}).Log(logLevel, "ProcessRequest")
+				log.With("duration", stat.Duration, logger.KeyError, err).Log(ctx, logLevel, "ProcessRequest")
 			}
 		case <-t.rootCtx.Done():
-			log.Debugf("Worker: Shutting down")
+			log.Debug("Worker: Shutting down")
 			return
 		}
 	}
 }
 
 func (t *Worker) businessLogic(ctx context.Context, jobID string) (WorkerStat, error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
+	_, log := logger.FromContext(ctx)
 	duration := t.config.ProcessMinDuration + time.Duration(
 		t.randNum.Int63n(int64(t.config.ProcessMaxDuration-t.config.ProcessMinDuration)),
 	)
-	log.Infof("Worker: Processing job: %s, duration: %v", jobID, duration)
+	log.Info("Worker: Processing", "job", jobID, "duration", duration)
 	time.Sleep(duration)
 
 	return WorkerStat{duration}, nil
 }
 
 func (t *Worker) runBusinessLogic(ctx context.Context, jobID string) (WorkerStat, error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
+	_, log := logger.FromContext(ctx)
 	meter := middleware.GetMeter(buildinfo.BuildInfo, log)
 	jobType := "backend"
 	jobName := "process_requests"
@@ -151,14 +149,14 @@ func (t *Worker) runBusinessLogic(ctx context.Context, jobID string) (WorkerStat
 	workerStat, err := mw_inner.InternalMiddlewareChain(
 		mw_inner.TryCatch[WorkerStat](),
 		mw_inner.Span[WorkerStat](t.tr, jobID),
-		mw_inner.Logger[WorkerStat](logrus.Fields{
+		mw_inner.Logger[WorkerStat](map[string]string{
 			// Already set in the root context
 			// logger.KeyApp:     appName,
 			// logger.KeyService: componentName,
 			"job_type": jobType,
 			"job_name": jobName,
 			"job_id":   jobID,
-		}, logrus.InfoLevel, logrus.DebugLevel),
+		}, slog.LevelInfo, slog.LevelDebug),
 		mw_inner.Metrics[WorkerStat](ctx, meter, "process_request", "Process Request", map[string]string{
 			logger.KeyApp:     appName,
 			logger.KeyService: componentName,
@@ -170,24 +168,24 @@ func (t *Worker) runBusinessLogic(ctx context.Context, jobID string) (WorkerStat
 		return t.businessLogic(ctx, jobID)
 	})(ctx)
 
-	reportLevel := logrus.InfoLevel
+	reportLevel := slog.LevelInfo
 	if err != nil {
-		reportLevel = logrus.ErrorLevel
+		reportLevel = slog.LevelError
 	}
-	log.WithFields(logrus.Fields{"duration": workerStat.Duration, logger.KeyError: err}).Log(reportLevel, "BUSINESS_LOGIC")
+	log.With("duration", workerStat.Duration, logger.KeyError, err).Log(ctx, reportLevel, "BUSINESS_LOGIC")
 
 	return workerStat, err
 }
 
 // Check if the component is ready to provide its services
 func (t *Worker) Check() error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
-	log.Infof("Worker: Check")
+	_, log := logger.FromContext(t.rootCtx)
+	log.Info("Worker: Check")
 	return t.err
 }
 
 func (t *Worker) InitTracer(ctx context.Context, tracerUrl string) (trace.Tracer, func(), error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
+	_, log := logger.FromContext(ctx)
 	hostname, _ := os.Hostname() //nolint:errcheck // not important
 	componentName := ComponentName
 	deferFn := func() {}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -56,7 +56,7 @@ var (
 
 // Create a new Timer instance
 func NewTimer(rootCtx context.Context, config *Config, currentTimeCh chan TimerRequest) (*Timer, error) {
-	rootCtx, _ = logger.FromContext(rootCtx, logrus.Fields{logger.KeyService: ComponentName})
+	rootCtx, _ = logger.FromContext(rootCtx, logger.KeyService, ComponentName)
 	return &Timer{
 		config:  config,
 		err:     healthcheck.ServiceNotAvailableError{},
@@ -67,11 +67,11 @@ func NewTimer(rootCtx context.Context, config *Config, currentTimeCh chan TimerR
 
 // Startup the Timer component
 func (t *Timer) Startup(wg *sync.WaitGroup) error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
+	_, log := logger.FromContext(t.rootCtx)
 	t.appWg = wg
 	wg.Add(1)
-	log.Debugf("Timer: Startup")
-	log.Debugf("Timer: config: %+v", t.config)
+	log.Debug("Timer: Startup")
+	log.Debug("Timer", "config", t.config)
 
 	tickerDuration := must.MustVal(time.ParseDuration(t.config.TimeStep))
 	t.ticker = time.NewTicker(tickerDuration)
@@ -86,8 +86,8 @@ func (t *Timer) Startup(wg *sync.WaitGroup) error {
 
 // Shutdown the Timer Component
 func (t *Timer) Shutdown() error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
-	log.Debugf("Timer: Shutdown")
+	_, log := logger.FromContext(t.rootCtx)
+	log.Debug("Timer: Shutdown")
 
 	// The component is not ready any more
 	t.err = healthcheck.ServiceNotAvailableError{}
@@ -101,9 +101,9 @@ func (t *Timer) Shutdown() error {
 
 // Run the component's processing logic within this function as a go-routine
 func (t *Timer) Run() {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
+	ctx, log := logger.FromContext(t.rootCtx)
 	defer t.appWg.Done()
-	defer log.Debugf("Timer: Stopped")
+	defer log.Debug("Timer: Stopped")
 
 	// The component is working properly
 	t.err = nil
@@ -114,19 +114,17 @@ func (t *Timer) Run() {
 		select {
 		// Distribute the current simulation time value
 		case currentTime := <-t.ticker.C:
-			log.Debugf("Timer: tick: %v", currentTime)
-			stat, err := t.runEnqueueRequests(t.rootCtx, currentTime, stepCounter)
-			logLevel := logrus.InfoLevel
+			log.Debug("Timer: tick: %v", currentTime)
+			stat, err := observeEnqueueRequests(t.tr, t.enqueueRequests)(t.rootCtx, currentTime, stepCounter)
+			logLevel := slog.LevelInfo
 			if err != nil {
-				logLevel = logrus.ErrorLevel
+				logLevel = slog.LevelError
 			}
-			log.WithFields(logrus.Fields{
-				"duration": stat.Duration, "success": stat.Success, "failed": len(stat.Failed), logger.KeyError: err,
-			}).Log(logLevel, "EnqueueRequests")
+			log.With("duration", stat.Duration, "success", stat.Success, "failed", len(stat.Failed), logger.KeyError, err).Log(ctx, logLevel, "EnqueueRequests")
 
 		// Catch the shutdown signal
 		case <-t.rootCtx.Done():
-			log.Debugf("Timer: Shutting down")
+			log.Debug("Timer: Shutting down")
 			return
 		}
 	}
@@ -158,7 +156,7 @@ var (
 )
 
 func (t *Timer) enqueueRequest(ctx context.Context, currentTime time.Time, jobID string) error {
-	ctx, _ = logger.FromContext(ctx, logrus.Fields{"job_id": jobID})
+	ctx, _ = logger.FromContext(ctx, "job_id", jobID)
 	timeout := time.After(t.config.EnqueueTimeout)
 
 	// Outgoing request trough channel: start a new Span
@@ -169,7 +167,7 @@ func (t *Timer) enqueueRequest(ctx context.Context, currentTime time.Time, jobID
 	)
 	defer spanChild.End()
 	// Log Span parent, in order to see the hierarchy in the logs
-	ctx, log := logger.FromContext(ctx, logrus.Fields{"spanParentID": spanParent.SpanID(), "spanID": spanChild.SpanContext().SpanID()})
+	ctx, log := logger.FromContext(ctx, "spanParentID", spanParent.SpanID(), "spanID", spanChild.SpanContext().SpanID())
 	log.Debug("EnqueueRequest")
 
 	select {
@@ -193,55 +191,49 @@ func (t *Timer) enqueueRequest(ctx context.Context, currentTime time.Time, jobID
 	return nil
 }
 
-func (t *Timer) runEnqueueRequests(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
-	meter := middleware.GetMeter(buildinfo.BuildInfo, log)
-	jobType := "backend"
-	jobName := "enqueue_requests"
-	appName := buildinfo.BuildInfo.AppName()
-	componentName := ComponentName
-	jobID := fmt.Sprintf("%s#%d", componentName, stepCounter)
+func observeEnqueueRequests(tr trace.Tracer, enqueueRequest func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error)) func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
+	return func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
+		_, log := logger.FromContext(ctx)
+		meter := middleware.GetMeter(buildinfo.BuildInfo, log)
+		jobType := "backend"
+		jobName := "enqueue_requests"
+		appName := buildinfo.BuildInfo.AppName()
+		componentName := ComponentName
+		jobID := fmt.Sprintf("%s#%d", componentName, stepCounter)
 
-	timerStat, err := mw_inner.InternalMiddlewareChain(
-		mw_inner.TryCatch[TimerStat](),
-		mw_inner.Span[TimerStat](t.tr, jobID),
-		mw_inner.Logger[TimerStat](logrus.Fields{
-			// Already set in the root context
-			// logger.KeyApp:     appName,
-			// logger.KeyService: componentName,
-			"job_type": jobType,
-			"job_name": jobName,
-			"job_id":   jobID,
-		}, logrus.InfoLevel, logrus.DebugLevel),
-		mw_inner.Metrics[TimerStat](ctx, meter, "enqueue_requests", "Enqueue Requests", map[string]string{
-			logger.KeyApp:     appName,
-			logger.KeyService: componentName,
-			"job_type":        jobType,
-			"job_name":        jobName,
-		}, middleware.FirstErr),
-		mw_inner.TryCatch[TimerStat](),
-	)(func(ctx context.Context) (TimerStat, error) {
-		return t.enqueueRequests(ctx, currentTime, stepCounter)
-	})(ctx)
-
-	reportLevel := logrus.InfoLevel
-	if err != nil {
-		reportLevel = logrus.ErrorLevel
+		return mw_inner.InternalMiddlewareChain(
+			mw_inner.TryCatch[TimerStat](),
+			mw_inner.Span[TimerStat](tr, jobID),
+			mw_inner.Logger[TimerStat](map[string]string{
+				// Already set in the root context
+				// logger.KeyApp:     appName,
+				// logger.KeyService: componentName,
+				"job_type": jobType,
+				"job_name": jobName,
+				"job_id":   jobID,
+			}, slog.LevelInfo, slog.LevelDebug),
+			mw_inner.Metrics[TimerStat](ctx, meter, "enqueue_requests", "Enqueue Requests", map[string]string{
+				logger.KeyApp:     appName,
+				logger.KeyService: componentName,
+				"job_type":        jobType,
+				"job_name":        jobName,
+			}, middleware.FirstErr),
+			mw_inner.TryCatch[TimerStat](),
+		)(func(ctx context.Context) (TimerStat, error) {
+			return enqueueRequest(ctx, currentTime, stepCounter)
+		})(ctx)
 	}
-	log.WithFields(logrus.Fields{"duration": timerStat.Duration, logger.KeyError: err}).Log(reportLevel, "RunEnqueueRequests")
-
-	return timerStat, err
 }
 
 // Check if the component is ready to provide its services
 func (t *Timer) Check() error {
-	_, log := logger.FromContext(t.rootCtx, logrus.Fields{})
-	log.Infof("Timer: Check")
+	_, log := logger.FromContext(t.rootCtx)
+	log.Info("Timer: Check")
 	return t.err
 }
 
 func (t *Timer) InitTracer(ctx context.Context) (trace.Tracer, func(), error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
+	_, log := logger.FromContext(ctx)
 	hostname, _ := os.Hostname() //nolint:errcheck // not important
 	componentName := ComponentName
 	deferFn := func() {}

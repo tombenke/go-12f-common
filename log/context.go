@@ -3,9 +3,9 @@ package log
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"os"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,33 +43,33 @@ type contextKey struct{}
 //	_, log := logger.LoggerFromCtx(ctx,
 //		LogKeyOutServerUri, url,
 //	)
-func FromContext(ctx context.Context, keysAndValues logrus.Fields) (context.Context, FieldLogger) {
+func FromContext(ctx context.Context, keysAndValues ...interface{}) (context.Context, *slog.Logger) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	var logger FieldLogger
+	var log *slog.Logger
 	var has bool
 	var store bool
-	if logger, has = ctx.Value(contextKey{}).(FieldLogger); !has || logger == nil {
-		logger = GetLogger(unknownAppName, logrus.DebugLevel)
+	if log, has = ctx.Value(contextKey{}).(*slog.Logger); !has || log == nil {
+		log = GetLogger(unknownAppName, slog.LevelDebug)
 		store = true
 	}
 	if len(keysAndValues) > 0 {
-		logger = logger.WithFields(keysAndValues)
+		log = log.With(keysAndValues...)
 		store = true
 	}
 	if store {
-		ctx = NewContext(ctx, logger)
+		ctx = NewContext(ctx, log)
 	}
 
-	return ctx, logger
+	return ctx, log
 }
 
 // NewContext returns a new Context, derived from ctx, which carries the
 // provided Logger.
-func NewContext(ctx context.Context, logger logrus.FieldLogger) context.Context {
+func NewContext(ctx context.Context, logger *slog.Logger) context.Context {
 	if logger == nil {
-		logger = GetLogger(unknownAppName, logrus.DebugLevel)
+		logger = GetLogger(unknownAppName, slog.LevelDebug)
 	}
 
 	return context.WithValue(ctx, contextKey{}, logger)
@@ -77,17 +77,16 @@ func NewContext(ctx context.Context, logger logrus.FieldLogger) context.Context 
 
 // GetLogger returns a registered logger with app name.
 // Creates a new instance, if not exists (uses the level only in this case)
-func GetLogger(app string, level logrus.Level) FieldLogger {
+func GetLogger(app string, level slog.Level) *slog.Logger {
 	if logger, has := loggers.Load(app); has {
-		return logger.(FieldLogger) //nolint:forcetypeassert // always *slog.Logger
+		return logger.(*slog.Logger) //nolint:forcetypeassert // always *slog.Logger
 	}
-	newFormatter := BuildFormatter("text")
-	//newFormatter := GetFormatter("json")
+	newHandler := slog.NewTextHandler
+	//newHandler := slog.NewJSONHandler
 
-	logger := &LogrusLogger{logrus.New()}
-	logger.SetFormatter(newFormatter)
-	logger.SetLevel(level)
-	logger.WithField("logger", app)
+	logger := slog.New(newHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})).With("logger", app)
 	loggers.Store(app, logger)
 
 	return logger

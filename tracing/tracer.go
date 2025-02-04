@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"regexp"
 	"strings"
@@ -25,11 +26,11 @@ const (
 )
 
 type ErrorHandler struct {
-	log logger.FieldLogger
+	log *slog.Logger
 }
 
 func (e *ErrorHandler) Handle(err error) {
-	e.log.WithField(logger.KeyError, err).Error("OTEL ERROR")
+	e.log.Error("OTEL ERROR", logger.KeyError, err)
 }
 
 var errorHandler = &ErrorHandler{} //nolint:gochecknoglobals // local once
@@ -43,7 +44,7 @@ var onceBodySetOtel = func() {     //nolint:gochecknoglobals // local once
 	//otel.SetLogger(*errorHandler.log)
 }
 
-func SetErrorHandlerLogger(log logger.FieldLogger) {
+func SetErrorHandlerLogger(log *slog.Logger) {
 	errorHandler.log = log
 }
 
@@ -59,7 +60,7 @@ var (
 	SpanKeyComponentValue string
 )
 
-func InitTracer(exporter sdktrace.SpanExporter, sampler sdktrace.Sampler, buildinfo model.BuildInfo, service string, instance string, command string, log logger.FieldLogger) *sdktrace.TracerProvider {
+func InitTracer(exporter sdktrace.SpanExporter, sampler sdktrace.Sampler, buildinfo model.BuildInfo, service string, instance string, command string, log *slog.Logger) *sdktrace.TracerProvider {
 	// For the demonstration, use sdktrace.AlwaysSample sampler to sample all traces.
 	// In a production application, use sdktrace.ProbabilitySampler with a desired probability.
 	// semconv keys are defined in https://github.com/open-telemetry/opentelemetry-specification/tree/main/semantic_conventions/trace

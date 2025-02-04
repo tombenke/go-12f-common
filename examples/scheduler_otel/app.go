@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/tombenke/go-12f-common/apprun"
 	"github.com/tombenke/go-12f-common/healthcheck"
@@ -33,7 +32,7 @@ var (
 )
 
 func (a *Application) Startup(wg *sync.WaitGroup) error {
-	_, log := logger.FromContext(a.rootCtx, logrus.Fields{})
+	_, log := logger.FromContext(a.rootCtx)
 	log.Info("Application Startup")
 
 	// Inject the central waitgroup into the application object
@@ -52,7 +51,7 @@ func (a *Application) Startup(wg *sync.WaitGroup) error {
 }
 
 func (a *Application) Shutdown() error {
-	_, log := logger.FromContext(a.rootCtx, logrus.Fields{})
+	_, log := logger.FromContext(a.rootCtx)
 	log.Info("Application Shutdown")
 	a.rootCtxCancel(ErrShutdownReceived)
 
@@ -78,20 +77,18 @@ func (a *Application) closeChannels() {
 }
 
 func (a *Application) Check() error {
-	_, log := logger.FromContext(a.rootCtx, logrus.Fields{})
+	_, log := logger.FromContext(a.rootCtx)
 	log.Info("Application Check")
 	return a.err
 }
 
 func NewApplication(config *Config) (apprun.LifecycleManager, error) {
 	appName := "scheduler_otel"
-	log := logger.GetLogger(appName, logrus.DebugLevel).WithFields(logrus.Fields{
-		logger.KeyApp: appName,
-	})
+	log := logger.GetLogger(appName, slog.LevelDebug).With(logger.KeyApp, appName)
 
 	rootCtx, rootCtxCancel := context.WithCancelCause(context.Background())
 	rootCtx = logger.NewContext(rootCtx, log)
-	log.Logger.Infof("Application.Config: %+v", *config)
+	log.Info("Application.Config", "config", *config)
 	// Create channel(s) for inter-component communication
 	currentTimeCh := make(chan timer.TimerRequest, config.QueueSize)
 

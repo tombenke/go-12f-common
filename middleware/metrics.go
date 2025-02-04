@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -60,11 +61,11 @@ var (
 
 // GetMeter returns the default meter.
 // Inits meter and InstrumentRegs (if needed)
-func GetMeter(buildinfo model.BuildInfo, log logger.FieldLogger) metric_api.Meter {
+func GetMeter(buildinfo model.BuildInfo, log *slog.Logger) metric_api.Meter {
 	meterOnce.Do(func() {
 		exporter, err := prometheus.New()
 		if err != nil {
-			log.WithField(logger.KeyError, err).Error("unable to instantiate prometheus exporter")
+			log.Error("unable to instantiate prometheus exporter", logger.KeyError, err)
 			panic(err)
 		}
 		provider := metric.NewMeterProvider(metric.WithReader(exporter))
