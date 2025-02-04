@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,16 +35,22 @@ func init() {
 
 // SetFormatterStr sets the log format to either `json` or `text`
 func SetFormatterStr(format string) {
+	Logger.SetFormatter(BuildFormatter(format))
+}
+
+func BuildFormatter(format string) logrus.Formatter {
 	switch strings.ToLower(format) {
 	case "json":
-		Logger.SetFormatter(&logrus.JSONFormatter{
+		return &logrus.JSONFormatter{
 			TimestampFormat: TimestampFormat,
-		})
+		}
 	case "text":
-	default:
-		Logger.SetFormatter(&logrus.TextFormatter{
+		return &logrus.TextFormatter{
 			TimestampFormat: TimestampFormat,
-		})
+		}
+	}
+	return &logrus.TextFormatter{
+		TimestampFormat: TimestampFormat,
 	}
 }
 

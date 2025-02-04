@@ -24,7 +24,7 @@ func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 }
 
 func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
-	if err := apprun.LoadConfigWithDefaultViper(flagSet, c); err != nil {
+	if err := apprun.LoadConfigWithDefaultViper(flagSet, c, "simple"); err != nil {
 		return fmt.Errorf("failed to load otel config. %w", err)
 	}
 	return nil
