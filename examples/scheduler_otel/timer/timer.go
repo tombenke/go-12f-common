@@ -115,7 +115,7 @@ func (t *Timer) Run() {
 		// Distribute the current simulation time value
 		case currentTime := <-t.ticker.C:
 			log.Debugf("Timer: tick: %v", currentTime)
-			stat, err := t.runEnqueueRequests(t.rootCtx, currentTime, stepCounter)
+			stat, err := observeEnqueueRequests(t.tr, t.enqueueRequests)(t.rootCtx, currentTime, stepCounter)
 			logLevel := logrus.InfoLevel
 			if err != nil {
 				logLevel = logrus.ErrorLevel
@@ -193,44 +193,38 @@ func (t *Timer) enqueueRequest(ctx context.Context, currentTime time.Time, jobID
 	return nil
 }
 
-func (t *Timer) runEnqueueRequests(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
-	_, log := logger.FromContext(ctx, logrus.Fields{})
-	meter := middleware.GetMeter(buildinfo.BuildInfo, log)
-	jobType := "backend"
-	jobName := "enqueue_requests"
-	appName := buildinfo.BuildInfo.AppName()
-	componentName := ComponentName
-	jobID := fmt.Sprintf("%s#%d", componentName, stepCounter)
+func observeEnqueueRequests(tr trace.Tracer, enqueueRequest func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error)) func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
+	return func(ctx context.Context, currentTime time.Time, stepCounter int) (TimerStat, error) {
+		_, log := logger.FromContext(ctx, logrus.Fields{})
+		meter := middleware.GetMeter(buildinfo.BuildInfo, log)
+		jobType := "backend"
+		jobName := "enqueue_requests"
+		appName := buildinfo.BuildInfo.AppName()
+		componentName := ComponentName
+		jobID := fmt.Sprintf("%s#%d", componentName, stepCounter)
 
-	timerStat, err := mw_inner.InternalMiddlewareChain(
-		mw_inner.TryCatch[TimerStat](),
-		mw_inner.Span[TimerStat](t.tr, jobID),
-		mw_inner.Logger[TimerStat](logrus.Fields{
-			// Already set in the root context
-			// logger.KeyApp:     appName,
-			// logger.KeyService: componentName,
-			"job_type": jobType,
-			"job_name": jobName,
-			"job_id":   jobID,
-		}, logrus.InfoLevel, logrus.DebugLevel),
-		mw_inner.Metrics[TimerStat](ctx, meter, "enqueue_requests", "Enqueue Requests", map[string]string{
-			logger.KeyApp:     appName,
-			logger.KeyService: componentName,
-			"job_type":        jobType,
-			"job_name":        jobName,
-		}, middleware.FirstErr),
-		mw_inner.TryCatch[TimerStat](),
-	)(func(ctx context.Context) (TimerStat, error) {
-		return t.enqueueRequests(ctx, currentTime, stepCounter)
-	})(ctx)
-
-	reportLevel := logrus.InfoLevel
-	if err != nil {
-		reportLevel = logrus.ErrorLevel
+		return mw_inner.InternalMiddlewareChain(
+			mw_inner.TryCatch[TimerStat](),
+			mw_inner.Span[TimerStat](tr, jobID),
+			mw_inner.Logger[TimerStat](logrus.Fields{
+				// Already set in the root context
+				// logger.KeyApp:     appName,
+				// logger.KeyService: componentName,
+				"job_type": jobType,
+				"job_name": jobName,
+				"job_id":   jobID,
+			}, logrus.InfoLevel, logrus.DebugLevel),
+			mw_inner.Metrics[TimerStat](ctx, meter, "enqueue_requests", "Enqueue Requests", map[string]string{
+				logger.KeyApp:     appName,
+				logger.KeyService: componentName,
+				"job_type":        jobType,
+				"job_name":        jobName,
+			}, middleware.FirstErr),
+			mw_inner.TryCatch[TimerStat](),
+		)(func(ctx context.Context) (TimerStat, error) {
+			return enqueueRequest(ctx, currentTime, stepCounter)
+		})(ctx)
 	}
-	log.WithFields(logrus.Fields{"duration": timerStat.Duration, logger.KeyError: err}).Log(reportLevel, "RunEnqueueRequests")
-
-	return timerStat, err
 }
 
 // Check if the component is ready to provide its services
