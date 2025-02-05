@@ -12,7 +12,6 @@ import (
 	"github.com/tombenke/go-12f-common/gsd"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
-	internal_slog "github.com/tombenke/go-12f-common/slog"
 )
 
 // LifecycleManager is an interface that defines the application's life-cycle management functions.
@@ -78,12 +77,9 @@ func NewApplicationRunner(config *Config, app LifecycleManager) *ApplicationRunn
 // and steps into the execution loop, that runs until the application receives signal to shut it down.
 func (ar *ApplicationRunner) Run() error {
 	// Initialize the config structures of the runner and the application using default values, envirnonment variables and CLI arguments
-	log.SetLevelStr(ar.config.LogLevel)
-	log.SetFormatterStr(ar.config.LogFormat)
-	internal_slog.SetupDefault(ar.config.LogLevel, ar.config.LogFormat)
+	log.SetupDefault(ar.config.LogLevel, ar.config.LogFormat)
 
-	logger := internal_slog.Default().With("appId", uuid.NewString())
-	ctx := context.WithValue(context.Background(), internal_slog.LoggerKey, logger)
+	ctx, logger := log.With(context.Background(), "appId", uuid.NewString())
 
 	if logger.Enabled(ctx, slog.LevelDebug) {
 		logger.Debug("Starting 12f application", "config", ar.config)
@@ -121,7 +117,7 @@ func (ar *ApplicationRunner) Run() error {
 
 		// Execute the shutdown process of the application
 		if err := ar.app.Shutdown(ctx); err != nil {
-			log.Logger.Errorf("Failed to shut down application. %v", err)
+			logger.With("error", err).Error("Failed to shut down application")
 		}
 
 		// Shut down the healthcheck services

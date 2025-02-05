@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/tombenke/go-12f-common/log"
 	"github.com/tombenke/go-12f-common/must"
-	"github.com/tombenke/go-12f-common/slog"
 	"golang.org/x/exp/maps"
 )
 
@@ -41,7 +42,7 @@ func NewHealthCheck(wg *sync.WaitGroup, config Config) HealthCheck {
 
 // Setup the Healtcheck services and start listening on the HealtCheck port
 func (h *HealthCheck) Startup(ctx context.Context) {
-	logger := slog.GetFromContextOrDefault(ctx).With("component", "HealthCheck")
+	_, logger := h.getLogger(ctx)
 	logger.Info("Starting up")
 	started := time.Now()
 	mux := http.NewServeMux()
@@ -89,10 +90,11 @@ func (h *HealthCheck) Startup(ctx context.Context) {
 		cancelCtx()
 	}()
 
-	h.waitUntilServerStarted(logger)
+	h.waitUntilServerStarted(ctx)
 }
 
-func (h *HealthCheck) waitUntilServerStarted(logger *slog.Logger) {
+func (h *HealthCheck) waitUntilServerStarted(ctx context.Context) {
+	_, logger := h.getLogger(ctx)
 	if len(h.config.Checks) > 0 {
 		for {
 			time.Sleep(10 * time.Millisecond)
@@ -121,4 +123,8 @@ func (h *HealthCheck) Shutdown(ctx context.Context) {
 	defer h.wg.Done()
 	slog.InfoContext(ctx, "Shutdown", "component", "HealthCheck")
 	must.Must(h.server.Shutdown(context.Background()))
+}
+
+func (h *HealthCheck) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
+	return log.With(ctx, "component", "HealthCheck")
 }

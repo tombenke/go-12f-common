@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -23,7 +24,7 @@ type Application struct {
 }
 
 func (a *Application) Startup(ctx context.Context, wg *sync.WaitGroup) error {
-	log.Logger.Infof("Application Startup")
+	a.getLogger(ctx).Info("Startup")
 
 	// Inject the central waitgroup into the application object
 	a.wg = wg
@@ -44,7 +45,7 @@ func (a *Application) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 }
 
 func (a *Application) Shutdown(ctx context.Context) error {
-	log.Logger.Infof("Application Shutdown")
+	a.getLogger(ctx).Info("Shutdown")
 	a.closeChannels()
 
 	a.err = healthcheck.ServiceNotAvailableError{}
@@ -67,12 +68,16 @@ func (a *Application) closeChannels() {
 }
 
 func (a *Application) Check(ctx context.Context) error {
-	log.Logger.Infof("Application Check")
+	a.getLogger(ctx).Info("Check")
 	return a.err
 }
 
+func (a *Application) getLogger(ctx context.Context) *slog.Logger {
+	return log.GetFromContextOrDefault(ctx).With("app", "Application")
+}
+
 func NewApplication(config *Config) (apprun.LifecycleManager, error) {
-	log.Logger.Infof("Application.Config: %+v", *config)
+	slog.Info("Creating Application", "config", *config)
 	// Create channel(s) for inter-component communication
 	currentTimeCh := make(chan (time.Time))
 

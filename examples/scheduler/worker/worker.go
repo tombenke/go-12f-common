@@ -2,12 +2,13 @@ package worker
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/healthcheck"
-	internal_slog "github.com/tombenke/go-12f-common/slog"
+	"github.com/tombenke/go-12f-common/log"
 )
 
 // The Worker component
@@ -33,16 +34,19 @@ func (t *Worker) GetConfigFlagSet(fs *pflag.FlagSet) {
 
 // Startup the Worker component
 func (t *Worker) Startup(ctx context.Context, wg *sync.WaitGroup) error {
+	_, logger := t.getLogger(ctx)
+
 	t.appWg = wg
 	wg.Add(1)
-	internal_slog.DebugContext(ctx, "Startup", "component", "Worker", "config", t.config)
+	logger.Debug("Startup", "config", t.config)
 	go t.Run(ctx)
 	return nil
 }
 
 // Shutdown the Worker Component
 func (t *Worker) Shutdown(ctx context.Context) error {
-	internal_slog.DebugContext(ctx, "Shutdown", "component", "Worker")
+	_, logger := t.getLogger(ctx)
+	logger.Debug("Shutdown")
 
 	// The components is ready any more
 	t.err = healthcheck.ServiceNotAvailableError{}
@@ -53,7 +57,7 @@ func (t *Worker) Shutdown(ctx context.Context) error {
 
 // Run the component's processing logic within this function as a go-routine
 func (t *Worker) Run(ctx context.Context) {
-	logger := internal_slog.GetFromContextOrDefault(ctx).With("component", "Worker")
+	_, logger := t.getLogger(ctx)
 	defer t.appWg.Done()
 	defer logger.Debug("Stopped")
 
@@ -76,6 +80,11 @@ func (t *Worker) Run(ctx context.Context) {
 
 // Check if the component is ready to provide its services
 func (t *Worker) Check(ctx context.Context) error {
-	internal_slog.InfoContext(ctx, "Check")
+	_, logger := t.getLogger(ctx)
+	logger.Info("Check")
 	return t.err
+}
+
+func (t *Worker) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
+	return log.With(ctx, "component", "Worker")
 }

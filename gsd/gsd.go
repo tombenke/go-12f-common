@@ -8,7 +8,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/tombenke/go-12f-common/slog"
+	"github.com/tombenke/go-12f-common/log"
 )
 
 // Register is an observer go routine to get notifed when termination signals arrive,
@@ -25,7 +25,7 @@ func RegisterGsdCallback(ctx context.Context, wg *sync.WaitGroup, cb func(os.Sig
 		// Block until a signal is received.
 		for {
 			s := <-sigs
-			slog.DebugContext(ctx, "Got signal", "signal", s)
+			log.DebugContext(ctx, "Got signal", "signal", s)
 			if s == syscall.SIGINT || s == syscall.SIGTERM {
 				wg.Done()
 				cb(s)

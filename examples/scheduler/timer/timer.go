@@ -3,11 +3,12 @@ package timer
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/tombenke/go-12f-common/healthcheck"
-	internal_slog "github.com/tombenke/go-12f-common/slog"
+	"github.com/tombenke/go-12f-common/log"
 )
 
 // The Timer component
@@ -30,7 +31,7 @@ func NewTimer(config *Config, currentTimeCh chan time.Time) *Timer {
 func (t *Timer) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	t.appWg = wg
 	wg.Add(1)
-	logger := internal_slog.GetFromContextOrDefault(ctx).With("component", "Timer")
+	ctx, logger := t.getLogger(ctx)
 	logger.Debug("Startup", "config", t.config)
 
 	tickerDuration, err := time.ParseDuration(t.config.TimeStep)
@@ -39,13 +40,14 @@ func (t *Timer) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	}
 
 	t.ticker = time.NewTicker(tickerDuration)
-	go t.Run(ctx)
+	go t.run(ctx)
 	return nil
 }
 
 // Shutdown the Timer Component
 func (t *Timer) Shutdown(ctx context.Context) error {
-	internal_slog.DebugContext(ctx, "Shutdown", "component", "Timer")
+	_, logger := t.getLogger(ctx)
+	logger.Debug("Shutdown")
 
 	// The component is not ready any more
 	t.err = healthcheck.ServiceNotAvailableError{}
@@ -54,11 +56,11 @@ func (t *Timer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Run the component's processing logic within this function as a go-routine
-func (t *Timer) Run(ctx context.Context) {
-	logger := internal_slog.GetFromContextOrDefault(ctx).With("component", "Timer")
+// run the component's processing logic within this function as a go-routine
+func (t *Timer) run(ctx context.Context) {
+	_, logger := t.getLogger(ctx)
 	defer t.appWg.Done()
-	defer logger.DebugContext(ctx, "Stopped")
+	defer logger.Debug("Stopped")
 
 	// The component is working properly
 	t.err = nil
@@ -81,6 +83,11 @@ func (t *Timer) Run(ctx context.Context) {
 
 // Check if the component is ready to provide its services
 func (t *Timer) Check(ctx context.Context) error {
-	internal_slog.InfoContext(ctx, "Check", "component", "Timer")
+	_, logger := t.getLogger(ctx)
+	logger.Info("Check")
 	return t.err
+}
+
+func (t *Timer) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
+	return log.With(ctx, "component", "Timer")
 }

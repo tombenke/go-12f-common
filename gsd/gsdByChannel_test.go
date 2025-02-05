@@ -12,7 +12,7 @@ import (
 )
 
 func TestRegisterByChannel(t *testing.T) {
-	log.SetLevelStr("debug")
+	log.SetupDefault("debug", "text")
 	var mu sync.Mutex
 	gsdCbCalled := false
 

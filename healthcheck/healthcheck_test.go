@@ -14,7 +14,7 @@ import (
 )
 
 func TestHealthCheckServer(t *testing.T) {
-	log.SetLevelStr("debug")
+	log.SetupDefault("debug", "text")
 	wg := sync.WaitGroup{}
 	hc := healthcheck.NewHealthCheck(
 		&wg,

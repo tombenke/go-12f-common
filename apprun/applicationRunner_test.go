@@ -3,6 +3,7 @@ package apprun_test
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"sync"
 	"syscall"
 	"testing"
@@ -28,23 +29,27 @@ func NewTestApp() apprun.LifecycleManager {
 }
 
 func (a *TestApp) GetConfigFlagSet(fs *flag.FlagSet) {
-	log.Logger.Infof("TestApp GetConfigFlagSet")
+	a.getLogger(context.Background()).Info("GetConfigFlagSet")
 }
 
 func (a *TestApp) Startup(ctx context.Context, wg *sync.WaitGroup) error {
-	log.Logger.Infof("TestApp Startup")
+	a.getLogger(ctx).Info("Startup")
 	a.wg = wg
 	return nil
 }
 
 func (a *TestApp) Shutdown(ctx context.Context) error {
-	log.Logger.Infof("TestApp Shutdown")
+	a.getLogger(ctx).Info("Shutdown")
 	return nil
 }
 
 func (a *TestApp) Check(ctx context.Context) error {
-	log.Logger.Infof("TestApp Check")
+	a.getLogger(ctx).Info("Check")
 	return a.err
+}
+
+func (a *TestApp) getLogger(ctx context.Context) *slog.Logger {
+	return log.GetFromContextOrDefault(ctx).With("app", "TestApp")
 }
 
 func TestApplicationRunner_StartStop(t *testing.T) {
@@ -60,20 +65,20 @@ func TestApplicationRunner_StartStop(t *testing.T) {
 
 	twg.Add(1)
 	go func() {
-		log.Logger.Infof("Start the app runner in blocking mode, that will be killed after 200 msec")
+		slog.Info("Start the app runner in blocking mode, that will be killed after 200 msec")
 		require.NoError(t, appRunner.Run())
 		twg.Done()
 	}()
 
 	twg.Add(1)
 	go func() {
-		log.Logger.Infof("Wait for 200 msec, then send TERM signal to the application")
+		slog.Info("Wait for 200 msec, then send TERM signal to the application")
 		<-time.After(200 * time.Millisecond)
 		// Sent TERM signal
 		must.Must(syscall.Kill(syscall.Getpid(), syscall.SIGTERM))
 		twg.Done()
 	}()
 
-	log.Logger.Infof("Wait for the threads to finish")
+	slog.Info("Wait for the threads to finish")
 	twg.Wait()
 }
