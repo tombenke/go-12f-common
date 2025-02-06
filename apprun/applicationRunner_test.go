@@ -2,7 +2,6 @@ package apprun_test
 
 import (
 	"context"
-	"flag"
 	"log/slog"
 	"sync"
 	"syscall"
@@ -12,44 +11,20 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
 	"github.com/tombenke/go-12f-common/must"
 )
 
 type Config struct{}
 
 type TestApp struct {
-	wg  *sync.WaitGroup
-	err error
 }
 
-func NewTestApp() apprun.LifecycleManager {
-	return &TestApp{err: healthcheck.ServiceNotAvailableError{}}
+func NewTestApp() apprun.Application {
+	return &TestApp{}
 }
 
-func (a *TestApp) GetConfigFlagSet(fs *flag.FlagSet) {
-	a.getLogger(context.Background()).Info("GetConfigFlagSet")
-}
-
-func (a *TestApp) Startup(ctx context.Context, wg *sync.WaitGroup) error {
-	a.getLogger(ctx).Info("Startup")
-	a.wg = wg
+func (a *TestApp) Components(ctx context.Context) []apprun.ComponentLifecycleManager {
 	return nil
-}
-
-func (a *TestApp) Shutdown(ctx context.Context) error {
-	a.getLogger(ctx).Info("Shutdown")
-	return nil
-}
-
-func (a *TestApp) Check(ctx context.Context) error {
-	a.getLogger(ctx).Info("Check")
-	return a.err
-}
-
-func (a *TestApp) getLogger(ctx context.Context) *slog.Logger {
-	return log.GetFromContextOrDefault(ctx).With("app", "TestApp")
 }
 
 func TestApplicationRunner_StartStop(t *testing.T) {
