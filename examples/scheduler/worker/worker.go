@@ -1,11 +1,14 @@
 package worker
 
 import (
+	"context"
+	"log/slog"
+	"sync"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
-	"sync"
-	"time"
 )
 
 // The Worker component
@@ -18,9 +21,9 @@ type Worker struct {
 }
 
 // Create a new Worker instance
-func NewWorker(config *Config, currentTimeCh chan time.Time) (*Worker, error) {
+func NewWorker(config *Config, currentTimeCh chan time.Time) *Worker {
 	doneCh := make(chan interface{})
-	return &Worker{config: config, err: healthcheck.ServiceNotAvailableError{}, doneCh: doneCh, currentTimeCh: currentTimeCh}, nil
+	return &Worker{config: config, err: healthcheck.ServiceNotAvailableError{}, doneCh: doneCh, currentTimeCh: currentTimeCh}
 }
 
 // Initialize the config parameters, then evaluate the environment variables and bind them for CLI argument evaluation
@@ -30,18 +33,20 @@ func (t *Worker) GetConfigFlagSet(fs *pflag.FlagSet) {
 }
 
 // Startup the Worker component
-func (t *Worker) Startup(wg *sync.WaitGroup) error {
+func (t *Worker) Startup(ctx context.Context, wg *sync.WaitGroup) error {
+	_, logger := t.getLogger(ctx)
+
 	t.appWg = wg
 	wg.Add(1)
-	log.Logger.Debugf("Worker: Startup")
-	log.Logger.Debugf("Worker: config: %+v", t.config)
-	go t.Run()
+	logger.Debug("Startup", "config", t.config)
+	go t.Run(ctx)
 	return nil
 }
 
 // Shutdown the Worker Component
-func (t *Worker) Shutdown() error {
-	log.Logger.Debugf("Worker: Shutdown")
+func (t *Worker) Shutdown(ctx context.Context) error {
+	_, logger := t.getLogger(ctx)
+	logger.Debug("Shutdown")
 
 	// The components is ready any more
 	t.err = healthcheck.ServiceNotAvailableError{}
@@ -51,9 +56,10 @@ func (t *Worker) Shutdown() error {
 }
 
 // Run the component's processing logic within this function as a go-routine
-func (t *Worker) Run() {
+func (t *Worker) Run(ctx context.Context) {
+	_, logger := t.getLogger(ctx)
 	defer t.appWg.Done()
-	defer log.Logger.Debugf("Worker: Stopped")
+	defer logger.Debug("Stopped")
 
 	// The component is working properly
 	t.err = nil
@@ -62,18 +68,23 @@ func (t *Worker) Run() {
 		select {
 		case currentTime := <-t.currentTimeCh:
 			// TODO: Implement the processing feature
-			log.Logger.Debugf("Worker: currentTime: %v", currentTime)
+			logger.Debug("Tick", "currentTime", currentTime)
 			continue
 
 		case <-t.doneCh:
-			log.Logger.Debugf("Worker: Shutting down")
+			logger.Debug("Shutting down")
 			return
 		}
 	}
 }
 
 // Check if the component is ready to provide its services
-func (t *Worker) Check() error {
-	log.Logger.Infof("Worker: Check")
+func (t *Worker) Check(ctx context.Context) error {
+	_, logger := t.getLogger(ctx)
+	logger.Info("Check")
 	return t.err
+}
+
+func (t *Worker) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
+	return log.With(ctx, "component", "Worker")
 }

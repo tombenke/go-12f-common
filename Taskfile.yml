@@ -8,8 +8,6 @@ vars:
 
   UML_DIR: ./out/uml
 
-env:
-
 dotenv:
   - .local.env
   - .secrets
@@ -70,24 +68,18 @@ tasks:
   test:
     desc: Run all the go tests.
     cmds:
-      #- task: dc-upd
-      - go test -count=1 ./...
-      #- task: dc-down
+      - go test -count=1 ./... {{.CLI_ARGS}}
 
   test-verbose:
     desc: Run all the go tests.
     cmds:
-      #- task: dc-upd
       - go test -v -count=1 ./...
-      #- task: dc-down
 
   test-single:
     desc: Run all the go tests in verbose mode from a single test file.
     cmds:
       - task: format
-      #- task: dc-upd
       - go test -v -count=1  -run={{.CLI_ARGS}} ./...
-      #- task: dc-down
 
   benchmark:
     desc: Run benchmark tests (INACCURATE, run directly from cli!)
@@ -110,11 +102,9 @@ tasks:
   docs:
     desc: Generate the documentation
     cmds:
-
       # Generate the UML diagrams
       - mkdir -p {{.UML_DIR}}
       - echo "TODO"
-
 #  # Docker test environment related tasks
 #  dc-up:
 #    desc: Start containers

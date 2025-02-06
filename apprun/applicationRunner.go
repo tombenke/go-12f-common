@@ -1,29 +1,31 @@
 package apprun
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/tombenke/go-12f-common/gsd"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
 )
 
 // LifecycleManager is an interface that defines the application's life-cycle management functions.
 // Every application must implement this interface that we want to run via ApplicationRunner
 type LifecycleManager interface {
 	// Startup() Starts the application and its internal components, by calling their Startup() method.
-	Startup(wg *sync.WaitGroup) error
+	Startup(ctx context.Context, wg *sync.WaitGroup) error
 
 	// Shutdown() Shuts down the internal components, by calling their Shutdown() method, then shuts down the application as well.
-	Shutdown() error
+	Shutdown(ctx context.Context) error
 
 	// Check() is called by the healthcheck API. If this function returns with nil that means the appication or component is healthy.
 	// If it returns with any error, that means the application or component is either sick, or yet not ready for working.
-	Check() error
+	Check(ctx context.Context) error
 }
 
 // MakeAndRun() is a wrapper function to make and run an application via ApplicationRunner
@@ -46,8 +48,7 @@ func MakeAndRun[T Configurer](appConfig T, appFactory func(T) (LifecycleManager,
 			return fmt.Errorf("failed to create application. %w", err)
 		}
 		appRunner := NewApplicationRunner(config, app)
-		appRunner.Run()
-		return nil
+		return appRunner.Run()
 	}
 	if err := rootCmd.Execute(); err != nil {
 		return fmt.Errorf("failed to execute command. %w", err)
@@ -74,53 +75,67 @@ func NewApplicationRunner(config *Config, app LifecycleManager) *ApplicationRunn
 
 // Run() runs the application, that means it calls the Startup() method of the application instance,
 // and steps into the execution loop, that runs until the application receives signal to shut it down.
-func (ar *ApplicationRunner) Run() {
+func (ar *ApplicationRunner) Run() error {
 	// Initialize the config structures of the runner and the application using default values, envirnonment variables and CLI arguments
-	log.SetLevelStr(ar.config.LogLevel)
-	log.SetFormatterStr(ar.config.LogFormat)
-	log.Logger.Debugf("ar.config: %+v", ar.config)
-	log.Logger.Infof("ApplicationRunner Run")
+	log.SetupDefault(ar.config.LogLevel, ar.config.LogFormat)
+
+	ctx, logger := log.With(context.Background(), "appId", uuid.NewString())
+
+	if logger.Enabled(ctx, slog.LevelDebug) {
+		logger.Debug("Starting 12f application", "config", ar.config)
+	} else {
+		logger.Info("Starting 12f application")
+	}
 	ar.wg.Add(1)
 
 	// Start the liveness and readiness check
-	hc := must.MustVal(healthcheck.NewHealthCheck(ar.wg, healthcheck.Config{Port: uint(ar.config.HealthCheckPort), Checks: map[string]healthcheck.Check{
-		ar.config.LivenessCheckPath:  ar.livenessCheck,
-		ar.config.ReadinessCheckPath: ar.readinessCheck,
-	}}))
+	hc := healthcheck.NewHealthCheck(
+		ar.wg,
+		healthcheck.Config{
+			Port: uint(ar.config.HealthCheckPort),
+			Checks: map[string]healthcheck.Check{
+				ar.config.LivenessCheckPath:  ar.livenessCheck,
+				ar.config.ReadinessCheckPath: ar.readinessCheck,
+			},
+		},
+	)
 
 	// Start the startup process of the application to run
-	hc.Startup()
+	hc.Startup(ctx)
 
 	// Execute the startup process of the application
-	must.Must(ar.app.Startup(ar.wg))
+	if err := ar.app.Startup(ctx, ar.wg); err != nil {
+		return fmt.Errorf("failed to start up application. %w", err)
+	}
 
 	// Setup graceful shutdown
-	gsd.RegisterGsdCallback(ar.wg, func(s os.Signal) {
+	gsd.RegisterGsdCallback(ctx, ar.wg, func(s os.Signal) {
 		defer ar.wg.Done()
 
 		// Shuts down the application
-		log.Logger.Infof("ApplicationRunner GsdCallback called")
+		logger.Info("GsdCallback called")
 
 		// Execute the shutdown process of the application
-		if err := ar.app.Shutdown(); err != nil {
-			log.Logger.Errorf("Failed to shut down application. %v", err)
+		if err := ar.app.Shutdown(ctx); err != nil {
+			logger.With("error", err).Error("Failed to shut down application")
 		}
 
 		// Shut down the healthcheck services
-		hc.Shutdown()
+		hc.Shutdown(ctx)
 	})
 
 	// Wait until the application has shut down
 	ar.wg.Wait()
+	return nil
 }
 
 // livenessCheck() is the built-in livenessCheck callback function for the HealthCheck service
-func (ar *ApplicationRunner) livenessCheck() error {
+func (ar *ApplicationRunner) livenessCheck(ctx context.Context) error {
 	// TODO: May add checks for heap-size, go routine num limit, etc.
 	return nil
 }
 
 // readinessCheck() is the built-in readinessCheck callback function for the HealthCheck service
-func (ar *ApplicationRunner) readinessCheck() error {
-	return ar.app.Check()
+func (ar *ApplicationRunner) readinessCheck(ctx context.Context) error {
+	return ar.app.Check(ctx)
 }
