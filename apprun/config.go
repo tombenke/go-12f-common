@@ -3,7 +3,7 @@ package apprun
 import (
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/config"
-	"github.com/tombenke/go-12f-common/otel"
+	"github.com/tombenke/go-12f-common/oti"
 )
 
 const (
@@ -24,7 +24,7 @@ type Config struct {
 	HealthCheckPort    uint   `mapstructure:"health-check-port"`
 	LivenessCheckPath  string `mapstructure:"liveness-check-path"`
 	ReadinessCheckPath string `mapstructure:"readiness-check-path"`
-	OtelConfig         otel.Config
+	OtelConfig         oti.Config
 }
 
 // GetConfigFlagSet() initializes the configuration object of the 12-factor application, and returns with it

@@ -17,6 +17,7 @@ import (
 	"github.com/tombenke/go-12f-common/gsd"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/oti"
 	"go.uber.org/multierr"
 )
 
@@ -127,6 +128,10 @@ func (ar *ApplicationRunner) Run() error {
 	// Start the startup process of the application to run
 	hc.Startup(ctx)
 
+	// Setup the OTEL instrumentation
+	oti := oti.NewOtel(ar.wg, ar.config.OtelConfig)
+	oti.Startup(ctx)
+
 	// Startup every component
 	if err := ar.startupComponents(ctx); err != nil {
 		return fmt.Errorf("failed to start application components: %w", err)
@@ -159,6 +164,9 @@ func (ar *ApplicationRunner) Run() error {
 		if err := ar.shutdownComponents(ctx); err != nil {
 			logger.Error("Failed to shut down application", "error", err)
 		}
+
+		// Shut down the OTEL services
+		oti.Shutdown(ctx)
 
 		// Shut down the healthcheck services
 		hc.Shutdown(ctx)

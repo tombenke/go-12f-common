@@ -1,4 +1,4 @@
-package otel_test
+package oti_test
 
 import (
 	"fmt"
@@ -8,18 +8,18 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tombenke/go-12f-common/otel"
+	"github.com/tombenke/go-12f-common/oti"
 )
 
 func TestOtelConfigWithDefaults(t *testing.T) {
-	config := otel.Config{}
+	config := oti.Config{}
 	fs := pflag.NewFlagSet("test-fs", pflag.ContinueOnError)
 	config.GetConfigFlagSet(fs)
 	require.NoError(t, config.LoadConfig(fs))
-	assert.Equal(t, otel.Config{
-		OtelServiceName:        otel.OTEL_SERVICE_NAME_DEFAULT,
-		OtelResourceAttributes: otel.OTEL_RESOURCE_ATTRIBUTES_DEFAULT,
-		OtelMetricsExporter:    otel.OTEL_METRICS_EXPORTER_DEFAULT,
+	assert.Equal(t, oti.Config{
+		OtelServiceName:        oti.OTEL_SERVICE_NAME_DEFAULT,
+		OtelResourceAttributes: oti.OTEL_RESOURCE_ATTRIBUTES_DEFAULT,
+		OtelMetricsExporter:    oti.OTEL_METRICS_EXPORTER_DEFAULT,
 	}, config)
 }
 
@@ -39,24 +39,24 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		"OTEL_METRICS_EXPORTER":    EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR,
 	}
 	cliArgs := []string{
-		fmt.Sprintf("--%v=%v", otel.OTEL_SERVICE_NAME_ARG_NAME, EXPECTED_OTEL_SERVICE_NAME_FROM_CLI_ARG),
-		fmt.Sprintf("--%v=%v", otel.OTEL_RESOURCE_ATTRIBUTES_ARG_NAME, EXPECTED_OTEL_RESOURCE_ATTRIBUTES_FROM_CLI_ARG),
-		fmt.Sprintf("--%v=%v", otel.OTEL_METRICS_EXPORTER_ARG_NAME, EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", oti.OTEL_SERVICE_NAME_ARG_NAME, EXPECTED_OTEL_SERVICE_NAME_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", oti.OTEL_RESOURCE_ATTRIBUTES_ARG_NAME, EXPECTED_OTEL_RESOURCE_ATTRIBUTES_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", oti.OTEL_METRICS_EXPORTER_ARG_NAME, EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG),
 	}
 	testCases := map[string]struct {
-		expectedConfig otel.Config
+		expectedConfig oti.Config
 		envVars        map[string]string
 		cliArgs        []string
 	}{
 		"default values": {
-			expectedConfig: otel.Config{
-				OtelServiceName:        otel.OTEL_SERVICE_NAME_DEFAULT,
-				OtelResourceAttributes: otel.OTEL_RESOURCE_ATTRIBUTES_DEFAULT,
-				OtelMetricsExporter:    otel.OTEL_METRICS_EXPORTER_DEFAULT,
+			expectedConfig: oti.Config{
+				OtelServiceName:        oti.OTEL_SERVICE_NAME_DEFAULT,
+				OtelResourceAttributes: oti.OTEL_RESOURCE_ATTRIBUTES_DEFAULT,
+				OtelMetricsExporter:    oti.OTEL_METRICS_EXPORTER_DEFAULT,
 			},
 		},
 		"from environment variables": {
-			expectedConfig: otel.Config{
+			expectedConfig: oti.Config{
 				OtelServiceName:        EXPECTED_OTEL_SERVICE_NAME_FROM_ENV_VAR,
 				OtelResourceAttributes: EXPECTED_OTEL_RESOURCE_ATTRIBUTES_FROM_ENV_VAR,
 				OtelMetricsExporter:    EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR,
@@ -64,7 +64,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			envVars: envVars,
 		},
 		"from cli args": {
-			expectedConfig: otel.Config{
+			expectedConfig: oti.Config{
 				OtelServiceName:        EXPECTED_OTEL_SERVICE_NAME_FROM_CLI_ARG,
 				OtelResourceAttributes: EXPECTED_OTEL_RESOURCE_ATTRIBUTES_FROM_CLI_ARG,
 				OtelMetricsExporter:    EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
@@ -72,7 +72,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			cliArgs: cliArgs,
 		},
 		"prefer cli args over env vars": {
-			expectedConfig: otel.Config{
+			expectedConfig: oti.Config{
 				OtelServiceName:        EXPECTED_OTEL_SERVICE_NAME_FROM_CLI_ARG,
 				OtelResourceAttributes: EXPECTED_OTEL_RESOURCE_ATTRIBUTES_FROM_CLI_ARG,
 				OtelMetricsExporter:    EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
@@ -86,7 +86,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			// given
 			fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
-			cfg := &otel.Config{}
+			cfg := &oti.Config{}
 
 			for k, v := range testCase.envVars {
 				os.Setenv(k, v)

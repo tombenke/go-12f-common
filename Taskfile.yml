@@ -95,9 +95,8 @@ tasks:
   build:
     desc: Build the go binary of examples
     cmds:
-      - go build -o examples/scheduler/main examples/scheduler/*.go
-      - go build -o examples/simple/main examples/simple/*.go
-      - go build -o examples/otel/main examples/otel/*.go
+      - go build -o examples/scheduler/scheduler examples/scheduler/*.go
+      - go build -o examples/simple/simple examples/simple/*.go
 
   docs:
     desc: Generate the documentation
