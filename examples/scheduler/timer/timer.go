@@ -39,6 +39,7 @@ func (t *Timer) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 		return fmt.Errorf("failed to parse TimeStep duration from config. %w", err)
 	}
 
+	logger.Debug("Starting ticker", "duration", tickerDuration.String())
 	t.ticker = time.NewTicker(tickerDuration)
 	go t.run(ctx)
 	return nil
@@ -58,7 +59,7 @@ func (t *Timer) Shutdown(ctx context.Context) error {
 
 // run the component's processing logic within this function as a go-routine
 func (t *Timer) run(ctx context.Context) {
-	_, logger := t.getLogger(ctx)
+	logger := log.GetFromContextOrDefault(ctx)
 	defer t.appWg.Done()
 	defer logger.Debug("Stopped")
 

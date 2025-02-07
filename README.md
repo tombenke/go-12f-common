@@ -35,14 +35,21 @@ Every application has a lifecycle. The Figure 2. shows the states of the applica
 
 ![The application states](docs/application-states.png)
 
-The Application object must implement the `apprun.LifecycleManager` interface in order to have its lifecycle managed.
-Moreover the components inside the application may also implement this interface.
+The application object must implement the `apprun.Application` interface in order to have its lifecycle managed.
+Moreover the components inside the application must implement the `apprun.ComponentLifecycleManager` interface.
 
-The `apprun.LifecycleManager` interface defines the following functions:
+The `apprun.ComponentLifecycleManager` interface defines the following functions:
 
-- `Startup()`: Starts the application and its internal components, by calling their `Startup()` method.
-- `Shutdown()`: Shuts down the internal components, by calling their `Shutdown()` method, then shuts down the application as well.
-- `Check()`:  It is called by the healthcheck API. If this function returns with nil that means the appication or component is healthy. If it returns with any error, that means the application or component is either sick, or yet not ready for working.
+- `Startup()`: The component should initialize itself and start a loop in a goroutine if necessary. When the loop is started, the component should signal that it's ready and healthy.
+- `Shutdown()`: Shuts down the component. If a loop has been started it should be graceful shut down and the component should signal that it's not ready anymore.
+- `Check()`:  It is called by the healthcheck API. If this function returns no error, then the component is considered healthy.
+
+There are additional hooks an application can subscribe to:
+
+- `AfterStartup`: Called after the components are initialized and became healthy. Parts of the application that depends on the components should be initialized here.
+- `BeforeShutdown`: Called before the components are being shut down.
+- `Check`: The application can also signal that it's not healthy. This is completely optional, the application is considered healthy when all of it's components are healthy by default
+
 
 The `apprun.MakeAndRun()` wrapper function manages the configuration and lifecycle of a complete application.
 It only needs the application level configuration aggregate, and the constructor of the application object and the main package of the application can be as simple as this:
@@ -68,16 +75,15 @@ The `apprun.MakeAndRun()` does the following:
 2. Resolves the configuration parameters to the application and its components.
 3. Calls the constructor function of the application with the complete, resolved configuration aggregate object.
 4. Set the log level and log format of the logger module,
-5. Starts the servive endpoints for liveness and health-check (live: `true`, ready: `false`).
-6. Enters the STARTUP state: calls the Startup() method of the application object. The Application's `Startup()` method is responsible to start the internal services of the application, by calling the `Startup()` method of the internal components.
-7. When the `Startup()` method of the application finished the component services are starting, and the application runner starts checking their readiness by calling their `Check()` method. When each of the internal services is ready, then the application is ready, and enters the RUN state.
-8. When the application enters the RUN state, it registers the signal handler function for graceful-shutdown, then it keeps running its state until a kill or shutdown signal is not arrived.
-9. When the application got a signal to shut down, it disables the readiness check, and enters the SHUTDOWN state.
-10. Calls the `Shutdown()` memthod of the application, that is responsible to call further the `Shutdown()` function of its internal components.
-11. When all internal components has been successfully stopped, the application terminates.
-
-The `"github.com/tombenke/go-12f-common/log"` package provides a global logger object, the `log.Logger`.
-It is a [Logrus](https://github.com/sirupsen/logrus) structured logger that the package automatically instantiate, and configure when the application starts.
+5. Starts the service endpoints for liveness and health-check (live: `true`, ready: `false`).
+6. Enters the STARTUP state: calls the `Startup()` method of the application's components.
+7. Waits until all components become healthy or times out.
+8. If provided, the application's `AfterStartup()` hook is called.
+9. When the application enters the RUN state, it registers the signal handler function for graceful-shutdown, then it keeps running its state until a kill or shutdown signal is not arrived.
+10. When the application got a signal to shut down, it disables the readiness check, and enters the SHUTDOWN state.
+11. If provided, the application's `BeforeShutdown()` hook is called.
+12. Calls `Shutdown()` on the components.
+13. When all internal components has been successfully stopped, the application terminates.
 
 The application-level configuration parameters of the logger:
 
@@ -92,7 +98,6 @@ Log format:
 - env. variable: `LOG_FORMAT`.
 - type: String. One of `json, text`.
 - default value: `json`.
-
 
 The application-level configuration parameters of the health-check endpoints:
 
