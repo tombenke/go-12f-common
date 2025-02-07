@@ -105,6 +105,7 @@ func (h *HealthCheck) waitUntilServerStarted(ctx context.Context) {
 				logger.Error("Server check failed", "error", err)
 				continue
 			}
+			logger.Debug("Checking response", "statusCode", resp.StatusCode)
 			resp.Body.Close()
 			if resp.StatusCode != http.StatusOK {
 				logger.Error("Server response is not OK", "statusCode", resp.StatusCode)
@@ -112,6 +113,7 @@ func (h *HealthCheck) waitUntilServerStarted(ctx context.Context) {
 			}
 
 			// If reached this point then server is up and running!
+			logger.Info("Server is up and running")
 			break
 		}
 	}

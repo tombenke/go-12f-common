@@ -39,7 +39,7 @@ func (t *Worker) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	t.appWg = wg
 	wg.Add(1)
 	logger.Debug("Startup", "config", t.config)
-	go t.Run(ctx)
+	go t.run(ctx)
 	return nil
 }
 
@@ -55,8 +55,8 @@ func (t *Worker) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Run the component's processing logic within this function as a go-routine
-func (t *Worker) Run(ctx context.Context) {
+// run the component's processing logic within this function as a go-routine
+func (t *Worker) run(ctx context.Context) {
 	_, logger := t.getLogger(ctx)
 	defer t.appWg.Done()
 	defer logger.Debug("Stopped")

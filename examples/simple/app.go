@@ -13,24 +13,27 @@ import (
 
 type Application struct {
 	config *Config
-	wg     *sync.WaitGroup
 	err    error
 }
 
-func (a *Application) Startup(ctx context.Context, wg *sync.WaitGroup) error {
+func (a *Application) Components(ctx context.Context) []apprun.ComponentLifecycleManager {
+	return nil
+}
+
+func (a *Application) AfterStartup(ctx context.Context, wg *sync.WaitGroup) error {
 	_, logger := a.getLogger(ctx)
-	a.wg = wg
-	logger.Info("Startup")
+	logger.Info("AfterStartup")
 
 	// After 3 seconds set the application readiness status to O.K.
-	<-time.After(time.Duration(a.config.StartupDelay) * time.Second)
+	<-time.After(a.config.StartupDelay)
+	logger.Info("Application should be healthy now", "after", a.config.StartupDelay)
 	a.err = nil
 	return nil
 }
 
-func (a *Application) Shutdown(ctx context.Context) error {
+func (a *Application) BeforeShutdown(ctx context.Context) error {
 	_, logger := a.getLogger(ctx)
-	logger.Info("Shutdown")
+	logger.Info("BeforeShutdown")
 	a.err = healthcheck.ServiceNotAvailableError{}
 	return nil
 }
@@ -42,10 +45,10 @@ func (a *Application) Check(ctx context.Context) error {
 }
 
 func (a *Application) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, "app", "Application")
+	return log.With(ctx, "app", "SimpleApplication")
 }
 
-func NewApplication(config *Config) (apprun.LifecycleManager, error) {
+func NewApplication(config *Config) (apprun.Application, error) {
 	return &Application{
 		err:    healthcheck.ServiceNotAvailableError{},
 		config: config,
