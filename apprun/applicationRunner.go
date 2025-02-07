@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"github.com/tombenke/go-12f-common/config"
 	"github.com/tombenke/go-12f-common/gsd"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
@@ -29,7 +30,7 @@ type LifecycleManager interface {
 }
 
 // MakeAndRun() is a wrapper function to make and run an application via ApplicationRunner
-func MakeAndRun[T Configurer](appConfig T, appFactory func(T) (LifecycleManager, error)) error {
+func MakeAndRun[T config.Configurer](appConfig T, appFactory func(T) (LifecycleManager, error)) error {
 	rootCmd := &cobra.Command{}
 	config := &Config{}
 	config.GetConfigFlagSet(rootCmd.Flags())

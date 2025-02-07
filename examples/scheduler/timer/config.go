@@ -3,7 +3,7 @@ package timer
 import (
 	"fmt"
 	"github.com/spf13/pflag"
-	"github.com/tombenke/go-12f-common/apprun"
+	"github.com/tombenke/go-12f-common/config"
 )
 
 const (
@@ -23,10 +23,10 @@ func (cfg *Config) GetConfigFlagSet(fs *pflag.FlagSet) {
 }
 
 func (cfg *Config) LoadConfig(fs *pflag.FlagSet) error {
-	if err := apprun.LoadConfigWithDefaultViper(fs, cfg); err != nil {
+	if err := config.LoadConfigWithDefaultViper(fs, cfg); err != nil {
 		return fmt.Errorf("failed to load config. %w", err)
 	}
 	return nil
 }
 
-var _ apprun.Configurer = (*Config)(nil)
+var _ config.Configurer = (*Config)(nil)

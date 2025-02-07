@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/pflag"
-	"github.com/tombenke/go-12f-common/apprun"
+	"github.com/tombenke/go-12f-common/config"
 	"github.com/tombenke/go-12f-common/examples/scheduler/timer"
 	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
 	"go.uber.org/multierr"
@@ -22,7 +22,7 @@ func (c *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 }
 
 func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
-	if err := apprun.LoadConfigWithDefaultViper(flagSet, c); err != nil {
+	if err := config.LoadConfigWithDefaultViper(flagSet, c); err != nil {
 		return fmt.Errorf("failed to load config. %w", err)
 	}
 	return multierr.Combine(
@@ -31,4 +31,4 @@ func (c *Config) LoadConfig(flagSet *pflag.FlagSet) error {
 	)
 }
 
-var _ apprun.Configurer = (*Config)(nil)
+var _ config.Configurer = (*Config)(nil)
