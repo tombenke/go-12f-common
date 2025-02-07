@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tombenke/go-12f-common/otel"
+	// "github.com/tombenke/go-12f-common/otel"
 )
 
 const (
@@ -38,7 +38,7 @@ type Config struct {
 	HealthCheckPort    uint   `mapstructure:"health-check-port"`
 	LivenessCheckPath  string `mapstructure:"liveness-check-path"`
 	ReadinessCheckPath string `mapstructure:"readiness-check-path"`
-	OtelConfig         otel.Config
+	// OtelConfig         otel.Config
 }
 
 // GetConfigFlagSet() initializes the configuration object of the 12-factor application, and returns with it
@@ -56,14 +56,15 @@ func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 	flagSet.String("liveness-check-path", LivenessCheckPathDefault, "The path of the liveness check endpoint")
 	flagSet.String("readiness-check-path", ReadinessCheckPathDefault, "The path of the readiness check endpoint")
 
-	cfg.OtelConfig.GetConfigFlagSet(flagSet)
+	// cfg.OtelConfig.GetConfigFlagSet(flagSet)
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
 	if err := LoadConfigWithDefaultViper(flagSet, cfg); err != nil {
 		return err
 	}
-	return cfg.OtelConfig.LoadConfig(flagSet)
+	return nil
+	// return cfg.OtelConfig.LoadConfig(flagSet)
 }
 
 func NewDefaultViper(flagSet *pflag.FlagSet) (*viper.Viper, error) {

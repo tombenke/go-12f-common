@@ -15,11 +15,11 @@ func TestOtelConfigWithDefaults(t *testing.T) {
 	config.GetConfigFlagSet(fs)
 	require.NoError(t, config.LoadConfig(fs))
 	assert.Equal(t, otel.Config{
-		ServiceName:      otel.ConfigServiceNameDefault,
-		TracesSampler:    otel.ConfigTracesSamplerDefault,
-		TracesSamplerArg: otel.ConfigTracesSamplerArgDefault,
-		TracesExporter:   otel.ConfigTracesExporterDefault,
-		MetricsExporter:  otel.ConfigMetricsExporterDefault,
-		LogsExporter:     otel.ConfigLogsExporterDefault,
+		OtelServiceName: otel.OTEL_SERVICE_NAME_DEFAULT,
+		////		TracesSampler:    otel.ConfigTracesSamplerDefault,
+		////		TracesSamplerArg: otel.ConfigTracesSamplerArgDefault,
+		////		TracesExporter:   otel.ConfigTracesExporterDefault,
+		////		MetricsExporter:  otel.ConfigMetricsExporterDefault,
+		////		LogsExporter:     otel.ConfigLogsExporterDefault,
 	}, config)
 }
