@@ -9,6 +9,12 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/healthcheck"
 	"github.com/tombenke/go-12f-common/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
+)
+
+var (
+	runCount metric.Int64Counter
 )
 
 // The Worker component
@@ -39,7 +45,18 @@ func (t *Worker) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	t.appWg = wg
 	wg.Add(1)
 	logger.Debug("Startup", "config", t.config)
+
+	// Create a counter meter instrument
+	meter := otel.Meter("worker-run-count")
+	var err error
+	runCount, err = meter.Int64Counter("run", metric.WithDescription("The number of times the worker run"))
+	if err != nil {
+		logger.Error("failed runCount meter creation", "error", err)
+	}
+
+	// Run the worker
 	go t.run(ctx)
+
 	return nil
 }
 
@@ -69,6 +86,7 @@ func (t *Worker) run(ctx context.Context) {
 		case currentTime := <-t.currentTimeCh:
 			// TODO: Implement the processing feature
 			logger.Debug("Tick", "currentTime", currentTime)
+			runCount.Add(ctx, 1)
 			continue
 
 		case <-t.doneCh:
