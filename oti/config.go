@@ -25,13 +25,6 @@ const (
 	OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME = "otel-exporter-prometheus-port"
 	OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT  = 9464
 	OTEL_EXPORTER_PROMETHEUS_PORT_HELP     = "the port used by the Prometheus exporter"
-
-// //	ConfigServiceNameDefault      = "undefined"
-// //	ConfigTracesSamplerDefault    = "always_off"
-// //	ConfigTracesSamplerArgDefault = ""
-// //	ConfigTracesExporterDefault   = "otlp"
-// //	ConfigMetricsExporterDefault  = "otlp"
-// //	ConfigLogsExporterDefault     = "otlp"
 )
 
 // Config holds the configuration parameters for the Open Telemetry instrumentation

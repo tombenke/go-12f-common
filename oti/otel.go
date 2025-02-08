@@ -15,7 +15,9 @@ import (
 	"github.com/tombenke/go-12f-common/must"
 
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -41,22 +43,23 @@ func (o *Otel) Startup(ctx context.Context) {
 	_, logger := o.getLogger(ctx)
 	logger.Info("Starting up")
 
-	// TODO: Create Resource for tracing and metrics
-	//res, err := resource.New(ctx,
-	//	resource.WithAttributes(
-	//		// The service name used to display traces in backends
-	//		serviceName,
-	//	),
-	//)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	// Create Resource for tracing and metrics
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			// The service name used to display traces in backends
+			semconv.ServiceNameKey.String(o.config.OtelServiceName),
+		),
+	)
+	if err != nil {
+		logger.Error("failed to create OTEL resource", "error", err)
+		panic(1)
+	}
 
 	// Startup Metrics
-	o.startupMetrics(ctx)
+	o.startupMetrics(ctx, res)
 
 	// Startup Tracing
-	o.startupTracer(ctx)
+	o.startupTracer(ctx, res)
 
 }
 
@@ -69,7 +72,7 @@ func (o *Otel) Shutdown(ctx context.Context) {
 }
 
 // Startup Metrics
-func (o *Otel) startupMetrics(ctx context.Context) {
+func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 	_, logger := o.getLogger(ctx)
 	exporterType := strings.ToLower(o.config.OtelMetricsExporter)
 	logger.Info("Startup Metrics", "exporter", exporterType)
@@ -83,11 +86,11 @@ func (o *Otel) startupMetrics(ctx context.Context) {
 		}
 
 		// TODO: Handle error as fatal
-		o.meterProvider, _ = initOtlpMeterProvider(ctx, conn)
+		o.meterProvider, _ = initOtlpMeterProvider(ctx, res, conn)
 
 	case "prometheus":
 		// TODO: Handle error as fatal
-		o.meterProvider, _ = initPrometheusMeterProvider(ctx)
+		o.meterProvider, _ = initPrometheusMeterProvider(ctx, res)
 
 		// TODO: Setup prometheus metrics exporter server
 		_, cancelCtx := context.WithCancel(context.Background())
@@ -101,7 +104,7 @@ func (o *Otel) startupMetrics(ctx context.Context) {
 		// Start the blocking server call in a separate thread
 		o.wg.Add(1)
 		go func() {
-			// TODO: Start prometheus metrics exporter server
+			// Start prometheus metrics exporter server
 			err := o.prometheusServer.ListenAndServe()
 			if errors.Is(err, http.ErrServerClosed) {
 				logger.Info("Server closed")
@@ -113,7 +116,7 @@ func (o *Otel) startupMetrics(ctx context.Context) {
 
 	case "console":
 		// TODO: Handle error as fatal
-		o.meterProvider, _ = initConsoleMeterProvider(ctx)
+		o.meterProvider, _ = initConsoleMeterProvider(ctx, res)
 
 	case "none":
 		// Use no-op provider
@@ -141,7 +144,7 @@ func (o *Otel) shutdownMetrics(ctx context.Context) {
 }
 
 // Startup Tracer
-func (o *Otel) startupTracer(ctx context.Context) {
+func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
 	_, logger := o.getLogger(ctx)
 	logger.Info("Startup Tracer")
 	// TODO
@@ -161,8 +164,10 @@ func (o *Otel) shutdownTracer(ctx context.Context) {
 // Initialize a gRPC connection to be used by both the tracer and meter providers.
 func initOtelGrpcConn(ctx context.Context) (*grpc.ClientConn, error) {
 	// It connects the OpenTelemetry Collector through local gRPC connection.
-	// TODO: Replace `localhost:4317` with config parameter
-	conn, err := grpc.NewClient("localhost:4317",
+	// TODO: Replace `localhost:4317` with config parameters
+	otelCollectorUrl := "localhost:4317"
+	slog.InfoContext(ctx, "Connect to OTEL Collector", "url", otelCollectorUrl)
+	conn, err := grpc.NewClient(otelCollectorUrl,
 		// Note the use of insecure transport here. TLS is recommended in production.
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
