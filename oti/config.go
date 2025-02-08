@@ -22,6 +22,10 @@ const (
 	OTEL_METRICS_EXPORTER_DEFAULT  = "none"
 	OTEL_METRICS_EXPORTER_HELP     = "Selects the exporter to use for metrics: otlp | prometheus | console | none"
 
+	OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME = "otel-exporter-prometheus-port"
+	OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT  = 9464
+	OTEL_EXPORTER_PROMETHEUS_PORT_HELP     = "the port used by the Prometheus exporter"
+
 // //	ConfigServiceNameDefault      = "undefined"
 // //	ConfigTracesSamplerDefault    = "always_off"
 // //	ConfigTracesSamplerArgDefault = ""
@@ -39,15 +43,19 @@ type Config struct {
 	// in the form of commaseparated key-value pairs.
 	OtelResourceAttributes string `mapstructure:"otel-resource-attributes"`
 
-	// OtelMetricsExporter specifies which exporter is used for metrics.
+	// OtelMetricsExporter specifies which exporter is used for metrics
 	// Possible values are: "otlp": OTLP, "prometheus": Prometheus, "console": Standard Output, "none": No automatically configured exporter for metrics
 	OtelMetricsExporter string `mapstructure:"otel-metrics-exporter"`
+
+	// OtelExporterPrometheusPort specifies the port that the prometheus exporter uses to provide the metrics
+	OtelExporterPrometheusPort int `mapstructure:"otel-exporter-prometheus-port"`
 }
 
 func (cfg *Config) GetConfigFlagSet(flagSet *pflag.FlagSet) {
 	flagSet.String(OTEL_SERVICE_NAME_ARG_NAME, OTEL_SERVICE_NAME_DEFAULT, OTEL_SERVICE_NAME_HELP)
 	flagSet.String(OTEL_RESOURCE_ATTRIBUTES_ARG_NAME, OTEL_RESOURCE_ATTRIBUTES_DEFAULT, OTEL_RESOURCE_ATTRIBUTES_HELP)
 	flagSet.String(OTEL_METRICS_EXPORTER_ARG_NAME, OTEL_METRICS_EXPORTER_DEFAULT, OTEL_METRICS_EXPORTER_HELP)
+	flagSet.Int(OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME, OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT, OTEL_EXPORTER_PROMETHEUS_PORT_HELP)
 }
 
 func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
@@ -57,4 +65,4 @@ func (cfg *Config) LoadConfig(flagSet *pflag.FlagSet) error {
 	return nil
 }
 
-////var _ apprun.Configurer = (*Config)(nil)
+var _ config.Configurer = (*Config)(nil)

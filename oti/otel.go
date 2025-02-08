@@ -94,7 +94,7 @@ func (o *Otel) startupMetrics(ctx context.Context) {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.Handler())
 		o.prometheusServer = &http.Server{
-			Addr:    fmt.Sprintf(":%d", 2223 /*o.config.PrometheusPort*/),
+			Addr:    fmt.Sprintf(":%d", o.config.OtelExporterPrometheusPort),
 			Handler: mux,
 		}
 
