@@ -169,7 +169,7 @@ Service Name:
 - default value: N.A.
 
 OTEL Resource Attributes:
-- description: It holds OpenTelemetry Resource information in the form of commaseparated key-value pairs.
+- description: It holds OpenTelemetry Resource information in the form of comma separated key-value pairs.
 - cli parameter: N.A.
 - env. variable: `OTEL_RESOURCE_ATTRIBUTES`.
 - type: String.
@@ -286,8 +286,11 @@ or
 ```
 
 ## References
-
 - [12-factor principles](https://12factor.net/)
 - [Health Check Response Format for HTTP APIs](https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check-06)
 - [Cobra](https://cobra.dev/)
 - [Viper](https://github.com/spf13/viper)
+- [slog](https://pkg.go.dev/log/slog)
+- [Open Telemetry](https://opentelemetry.io/)
+- [OpenTelemetry-Go](https://pkg.go.dev/go.opentelemetry.io)
+
