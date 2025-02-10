@@ -39,7 +39,7 @@ Every configuration object must implement the `apprun.Configurer` interface:
 
 - `LoadConfig()`: resolves the actual values of the configuration object. It takes into account the parameter definitions, the CLI and environment variables and the default values as well.
 
-### Lifecycle Management with graceful shutwown
+### Lifecycle Management with graceful shutdown
 
 Every application has a lifecycle. The Figure 2. shows the states of the application that goes through during its lifecycle:
 

@@ -7,7 +7,7 @@ vars:
     sh: sh -c 'echo "$(pwd)/.git/hooks"'
 
   VERSION:
-    sh: sh -c 'git describe --tags'
+    sh: sh -c 'git describe --tags --always'
 
   LD_FLAGS: "-X 'github.com/tombenke/go-12f-common/buildinfo.version={{.VERSION}}'"
 
