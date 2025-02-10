@@ -6,6 +6,11 @@ vars:
   GIT_HOOKS_DIR:
     sh: sh -c 'echo "$(pwd)/.git/hooks"'
 
+  VERSION:
+    sh: sh -c 'git describe --tags'
+
+  LD_FLAGS: "-X 'github.com/tombenke/go-12f-common/buildinfo.version={{.VERSION}}'"
+
   UML_DIR: ./out/uml
 
 dotenv:
@@ -95,7 +100,7 @@ tasks:
   build:
     desc: Build the go binary of examples
     cmds:
-      - go build -o examples/scheduler/scheduler examples/scheduler/*.go
+      - go build -ldflags="{{.LD_FLAGS}}" -o examples/scheduler/scheduler examples/scheduler/*.go
       - go build -o examples/simple/simple examples/simple/*.go
 
   docs:

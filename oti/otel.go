@@ -11,9 +11,11 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/tombenke/go-12f-common/buildinfo"
 	"github.com/tombenke/go-12f-common/log"
 	"github.com/tombenke/go-12f-common/must"
 
+	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -44,14 +46,22 @@ func (o *Otel) Startup(ctx context.Context) {
 	logger.Info("Starting up")
 
 	// Create Resource for tracing and metrics
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
-			// The service name used to display traces in backends
-			semconv.ServiceNameKey.String(o.config.OtelServiceName),
-		),
-	)
+	res, err := resource.New(ctx, resource.WithAttributes(
+		// The service name used to display traces in backends
+		//semconv.ServiceNameKey.String(o.config.OtelServiceName),
+		//semconv.ServiceInstanceIDKey.String("this-is-a-service-instance-ID"),
+		getResourceAttributes()...,
+	///		semconv.ServiceVersionKey.String(buildinfo.Version()),
+	))
+
 	if err != nil {
 		logger.Error("failed to create OTEL resource", "error", err)
+		panic(1)
+	}
+
+	res, err = resource.Merge(res, resource.Default())
+	if err != nil {
+		logger.Error("failed to merge OTEL resources", "error", err)
 		panic(1)
 	}
 
@@ -60,7 +70,6 @@ func (o *Otel) Startup(ctx context.Context) {
 
 	// Startup Tracing
 	o.startupTracer(ctx, res)
-
 }
 
 // Shut down the Otel services
@@ -176,4 +185,12 @@ func initOtelGrpcConn(ctx context.Context) (*grpc.ClientConn, error) {
 	}
 
 	return conn, err
+}
+
+func getResourceAttributes() []attribute.KeyValue {
+	attributes := []attribute.KeyValue{}
+	if buildinfo.Version() != "" {
+		attributes = append(attributes, semconv.ServiceVersionKey.String(buildinfo.Version()))
+	}
+	return attributes
 }

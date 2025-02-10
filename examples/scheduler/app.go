@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/tombenke/go-12f-common/apprun"
+	"github.com/tombenke/go-12f-common/buildinfo"
 	"github.com/tombenke/go-12f-common/examples/scheduler/timer"
 	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
 	"github.com/tombenke/go-12f-common/log"
 )
+
+//var Version string = "0.0.0"
 
 type Application struct {
 	config        *Config
@@ -26,6 +29,7 @@ func (a *Application) Components(ctx context.Context) []apprun.ComponentLifecycl
 
 func (a *Application) AfterStartup(ctx context.Context, wg *sync.WaitGroup) error {
 	a.getLogger(ctx).Info("AfterStartup")
+	a.getLogger(ctx).Debug("BuildInfo", "AppName", buildinfo.AppName(), "Version", buildinfo.Version())
 	return nil
 }
 

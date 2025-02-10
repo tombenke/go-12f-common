@@ -68,14 +68,14 @@
         <y:ProxyAutoBoundsNode>
           <y:Realizers active="0">
             <y:GroupNode>
-              <y:Geometry height="265.55046250000004" width="580.8007999999999" x="682.6919999999994" y="169.63593749999995"/>
+              <y:Geometry height="263.9504625000001" width="768.7047062499997" x="682.6919999999994" y="169.6359374999999"/>
               <y:Fill color="#F5F5F5" transparent="false"/>
               <y:BorderStyle color="#000000" type="dashed" width="1.0"/>
-              <y:NodeLabel alignment="right" autoSizePolicy="node_width" backgroundColor="#EBEBEB" borderDistance="0.0" fontFamily="Dialog" fontSize="15" fontStyle="plain" hasLineColor="false" height="21.4609375" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="t" textColor="#000000" verticalTextPosition="bottom" visible="true" width="580.8007999999999" x="0.0" xml:space="preserve" y="0.0">ApplicationRunner</y:NodeLabel>
+              <y:NodeLabel alignment="right" autoSizePolicy="node_width" backgroundColor="#EBEBEB" borderDistance="0.0" fontFamily="Dialog" fontSize="15" fontStyle="plain" hasLineColor="false" height="21.4609375" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="t" textColor="#000000" verticalTextPosition="bottom" visible="true" width="768.7047062499997" x="0.0" xml:space="preserve" y="0.0">ApplicationRunner</y:NodeLabel>
               <y:Shape type="roundrectangle"/>
               <y:State closed="false" closedHeight="50.0" closedWidth="50.0" innerGraphDisplayEnabled="false"/>
               <y:Insets bottom="15" bottomF="15.0" left="15" leftF="15.0" right="15" rightF="15.0" top="15" topF="15.0"/>
-              <y:BorderInsets bottom="2" bottomF="1.599999999999966" left="4" leftF="3.840000000000032" right="0" rightF="0.0" top="0" topF="0.0"/>
+              <y:BorderInsets bottom="0" bottomF="0.0" left="4" leftF="3.840000000000032" right="0" rightF="0.0" top="0" topF="0.0"/>
             </y:GroupNode>
             <y:GroupNode>
               <y:Geometry height="50.0" width="50.0" x="909.3759999999997" y="406.08799999999985"/>
@@ -97,18 +97,18 @@
             <y:ProxyAutoBoundsNode>
               <y:Realizers active="0">
                 <y:GroupNode>
-                  <y:Geometry height="212.48952500000007" width="319.60698749999983" x="928.8858124999995" y="206.09687499999995"/>
+                  <y:Geometry height="212.48952500000013" width="505.87239999999974" x="930.5243062499994" y="206.0968749999999"/>
                   <y:Fill color="#F5F5F5" transparent="false"/>
                   <y:BorderStyle color="#000000" type="dashed" width="1.0"/>
-                  <y:NodeLabel alignment="left" autoSizePolicy="node_width" backgroundColor="#EBEBEB" borderDistance="0.0" fontFamily="Dialog" fontSize="15" fontStyle="plain" hasLineColor="false" height="91.3046875" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="tr" textColor="#000000" verticalTextPosition="bottom" visible="true" width="319.60698749999983" x="0.0" xml:space="preserve" y="0.0">    Application
+                  <y:NodeLabel alignment="left" autoSizePolicy="node_width" backgroundColor="#EBEBEB" borderDistance="0.0" fontFamily="Dialog" fontSize="15" fontStyle="plain" hasLineColor="false" height="91.3046875" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="tr" textColor="#000000" verticalTextPosition="bottom" visible="true" width="505.87239999999974" x="0.0" xml:space="preserve" y="0.0">    Application
       - GetConfigFlagSet(fs *flag.FlagSet)
-      - Startup(wg *sync.WaitGroup) error
-      - Shutdown() error
-      - Check() error</y:NodeLabel>
+      - AfterStartup(ctx context.Context, wg *sync.WaitGroup) error
+      - BeforeShutdown(ctx context.Context) error
+      - Run() error</y:NodeLabel>
                   <y:Shape type="roundrectangle"/>
                   <y:State closed="false" closedHeight="50.0" closedWidth="50.0" innerGraphDisplayEnabled="false"/>
                   <y:Insets bottom="15" bottomF="15.0" left="15" leftF="15.0" right="15" rightF="15.0" top="15" topF="15.0"/>
-                  <y:BorderInsets bottom="1" bottomF="0.7376000000001" left="30" leftF="29.79098750000003" right="20" rightF="20.473600000000033" top="5" topF="5.132037500000081"/>
+                  <y:BorderInsets bottom="6" bottomF="5.537600000000111" left="51" leftF="50.55249375000017" right="52" rightF="51.57750625000017" top="0" topF="0.3320375000000695"/>
                 </y:GroupNode>
                 <y:GroupNode>
                   <y:Geometry height="50.0" width="50.0" x="1050.9759999999997" y="480.08799999999985"/>
@@ -127,10 +127,10 @@
             <node id="n2::n0::n0">
               <data key="d6">
                 <y:GenericNode configuration="com.yworks.bpmn.Activity.withShadow">
-                  <y:Geometry height="76.06879999999995" width="232.88479999999993" x="980.1343999999995" y="326.78"/>
+                  <y:Geometry height="76.06879999999995" width="367.2847999999998" x="1002.5343999999993" y="321.97999999999996"/>
                   <y:Fill color="#FFFFFFE6" color2="#D4D4D4CC" transparent="false"/>
                   <y:BorderStyle color="#123EA2" type="line" width="1.0"/>
-                  <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="114.4423999999999" y="36.034400000000005">
+                  <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="181.64239999999995" y="36.034400000000005">
                     <y:LabelModel>
                       <y:SmartNodeLabelModel distance="4.0"/>
                     </y:LabelModel>
@@ -152,14 +152,14 @@
             <node id="n2::n0::n1">
               <data key="d6">
                 <y:GenericNode configuration="com.yworks.bpmn.Activity.withShadow">
-                  <y:Geometry height="76.06879999999995" width="232.88479999999993" x="973.6767999999995" y="317.53360000000004"/>
+                  <y:Geometry height="76.06879999999995" width="367.2847999999998" x="996.0767999999996" y="312.73359999999997"/>
                   <y:Fill color="#FFFFFFE6" color2="#D4D4D4CC" transparent="false"/>
                   <y:BorderStyle color="#123EA2" type="line" width="1.0"/>
-                  <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="229.685546875" x="1.5996265624999069" xml:space="preserve" y="1.1125249999999482">Service
+                  <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="356.0078125" x="5.638493749999952" xml:space="preserve" y="1.1125249999999482">Service
   - GetConfigFlagSet(fs *flag.FlagSet)
-  - Startup(wg *sync.WaitGroup) error
-  - Shutdown() error
-  - Check() error
+  - Startup(ctx context.Context, wg *sync.WaitGroup) error
+  - Shutdown(ctx context.Context) error
+  - Check(ctx context.Context) error
 <y:LabelModel><y:SmartNodeLabelModel distance="4.0"/></y:LabelModel><y:ModelParameter><y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/></y:ModelParameter></y:NodeLabel>
                   <y:StyleProperties>
                     <y:Property class="java.awt.Color" name="com.yworks.bpmn.icon.line.color" value="#000000"/>
@@ -273,10 +273,10 @@ SIGKILL<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultA
     <edge id="n2::e0" source="n2::n2" target="n2::n0">
       <data key="d10">
         <y:PolyLineEdge>
-          <y:Path sx="0.24800000000050204" sy="26.113512499999445" tx="-123.9293062499994" ty="-17.79843750000049"/>
+          <y:Path sx="0.24800000000050204" sy="26.113512499999445" tx="-159.44984426225167" ty="-17.79843750000049"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" backgroundColor="#FFFFFF" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="50.27734375" x="21.40054199218696" xml:space="preserve" y="-8.984387890625499">Check()<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/></y:LabelModel><y:ModelParameter><y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="center" ratio="0.5" segment="0"/></y:ModelParameter><y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
+          <y:EdgeLabel alignment="center" backgroundColor="#FFFFFF" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="50.27734375" x="22.191773730468185" xml:space="preserve" y="-8.984387890625499">Check()<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/></y:LabelModel><y:ModelParameter><y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="center" ratio="0.5" segment="0"/></y:ModelParameter><y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -284,10 +284,10 @@ SIGKILL<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultA
     <edge id="n2::e1" source="n2::n1" target="n2::n0">
       <data key="d10">
         <y:PolyLineEdge>
-          <y:Path sx="0.0" sy="0.0" tx="-63.68530624999812" ty="72.71436249999994"/>
+          <y:Path sx="0.0" sy="0.0" tx="-81.93874774761801" ty="72.71436249999994"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" backgroundColor="#FFFFFF" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.275390625" x="9.921049804686959" xml:space="preserve" y="-8.984374755859392">Shutdown()<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/></y:LabelModel><y:ModelParameter><y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="center" ratio="0.5" segment="0"/></y:ModelParameter><y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
+          <y:EdgeLabel alignment="center" backgroundColor="#FFFFFF" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.275390625" x="10.695313769530685" xml:space="preserve" y="-8.984374755859449">Shutdown()<y:LabelModel><y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/></y:LabelModel><y:ModelParameter><y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="center" ratio="0.5" segment="0"/></y:ModelParameter><y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
