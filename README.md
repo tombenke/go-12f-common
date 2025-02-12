@@ -210,6 +210,7 @@ OtelTracesSamplerArg:
 - description: Specifies arguments, if applicable, to the sampler defined in by `--otel-traces-sampler`.
 - cli parameter: `--otel-traces-sampler-arg`
 - env. variable: `OTEL_TRACES_SAMPLER_ARG`.
+- type: String.
 - default: `""`.
 
 It is also possible to set the so called `service.version` resource attribute.
@@ -232,42 +233,6 @@ so it is necessary to intentionally select an active exporter to make the instru
 
 The [`examples/scheduler/`](examples/scheduler/) application demonstrates how to use the OTEL metrics.
 The [`examples/scheduler/worker/worker.go`](examples/scheduler/worker/worker.go) uses a counter meter instrument.
-
-Run the scheduler application with `console` metric exporter to test how the OTEL configuration parameters are working:
-
-```bash
-OTEL_SERVICE_NAME=hubcontrol:scheduler OTEL_RESOURCE_ATTRIBUTES=service.instance.id=b9d7402f-358c-4909-8e2f-66b3d2f5a6a8 ./examples/scheduler/scheduler --otel-metrics-exporter console --time-step 5s
-
-{"time":"2025-02-10T18:13:45.812187525+01:00","level":"INFO","msg":"Creating Application","config":{}}
-{"time":"2025-02-10T18:13:45.812249813+01:00","level":"INFO","msg":"Starting 12f application","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391"}
-{"time":"2025-02-10T18:13:45.812294432+01:00","level":"INFO","msg":"Starting up","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}
-{"time":"2025-02-10T18:13:45.822586044+01:00","level":"INFO","msg":"Checking if server started...","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}
-{"time":"2025-02-10T18:13:45.823355568+01:00","level":"INFO","msg":"Server is up and running","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}
-{"time":"2025-02-10T18:13:45.82336999+01:00","level":"INFO","msg":"HealthCheck is up and running!","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}
-{"time":"2025-02-10T18:13:45.823384289+01:00","level":"INFO","msg":"Starting up","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Otel"}
-{"time":"2025-02-10T18:13:45.823427264+01:00","level":"INFO","msg":"Startup Metrics","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Otel","exporter":"console"}
-{"time":"2025-02-10T18:13:45.82348072+01:00","level":"INFO","msg":"Startup Tracer","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Otel"}
-{"time":"2025-02-10T18:13:45.823540939+01:00","level":"INFO","msg":"Check","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Timer"}
-{"time":"2025-02-10T18:13:45.823546078+01:00","level":"INFO","msg":"Check","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Worker"}
-{"time":"2025-02-10T18:13:45.848795071+01:00","level":"INFO","msg":"Check","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Timer"}
-{"time":"2025-02-10T18:13:45.848827478+01:00","level":"INFO","msg":"Check","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"Worker"}
-{"time":"2025-02-10T18:13:45.848843553+01:00","level":"INFO","msg":"AfterStartup","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","app":"Application"}
-
-{"Resource":[{"Key":"service.instance.id","Value":{"Type":"STRING","Value":"b9d7402f-358c-4909-8e2f-66b3d2f5a6a8"}},{"Key":"service.name","Value":{"Type":"STRING","Value":"hubcontrol:scheduler"}},{"Key":"service.version","Value":{"Type":"STRING","Value":"v1.0.0-24-g7f69aad"}},{"Key":"telemetry.sdk.language","Value":{"Type":"STRING","Value":"go"}},{"Key":"telemetry.sdk.name","Value":{"Type":"STRING","Value":"opentelemetry"}},{"Key":"telemetry.sdk.version","Value":{"Type":"STRING","Value":"1.34.0"}}],"ScopeMetrics":[]}
-
-{"Resource":[{"Key":"service.instance.id","Value":{"Type":"STRING","Value":"b9d7402f-358c-4909-8e2f-66b3d2f5a6a8"}},{"Key":"service.name","Value":{"Type":"STRING","Value":"hubcontrol:scheduler"}},{"Key":"service.version","Value":{"Type":"STRING","Value":"v1.0.0-24-g7f69aad"}},{"Key":"telemetry.sdk.language","Value":{"Type":"STRING","Value":"go"}},{"Key":"telemetry.sdk.name","Value":{"Type":"STRING","Value":"opentelemetry"}},{"Key":"telemetry.sdk.version","Value":{"Type":"STRING","Value":"1.34.0"}}],"ScopeMetrics":[{"Scope":{"Name":"worker-run-count","Version":"","SchemaURL":"","Attributes":null},"Metrics":[{"Name":"run","Description":"The number of times the worker run","Unit":"","Data":{"DataPoints":[{"Attributes":[],"StartTime":"2025-02-10T18:13:45.823523323+01:00","Time":"2025-02-10T18:13:51.823641272+01:00","Value":1}],"Temporality":"CumulativeTemporality","IsMonotonic":true}}]}]}
-
-^C{"time":"2025-02-10T18:13:52.983347391+01:00","level":"INFO","msg":"GsdCallback called","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391"}
-{"time":"2025-02-10T18:13:52.98338766+01:00","level":"INFO","msg":"BeforeShutdown","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","app":"Application"}
-{"time":"2025-02-10T18:13:52.98340359+01:00","level":"INFO","msg":"Shutdown","component":"Otel"}
-{"time":"2025-02-10T18:13:52.983418198+01:00","level":"INFO","msg":"Shutdown","component":"Otel.Metrics"}
-{"Resource":[{"Key":"service.instance.id","Value":{"Type":"STRING","Value":"b9d7402f-358c-4909-8e2f-66b3d2f5a6a8"}},{"Key":"service.name","Value":{"Type":"STRING","Value":"hubcontrol:scheduler"}},{"Key":"service.version","Value":{"Type":"STRING","Value":"v1.0.0-24-g7f69aad"}},{"Key":"telemetry.sdk.language","Value":{"Type":"STRING","Value":"go"}},{"Key":"telemetry.sdk.name","Value":{"Type":"STRING","Value":"opentelemetry"}},{"Key":"telemetry.sdk.version","Value":{"Type":"STRING","Value":"1.34.0"}}],"ScopeMetrics":[{"Scope":{"Name":"worker-run-count","Version":"","SchemaURL":"","Attributes":null},"Metrics":[{"Name":"run","Description":"The number of times the worker run","Unit":"","Data":{"DataPoints":[{"Attributes":[],"StartTime":"2025-02-10T18:13:45.823523323+01:00","Time":"2025-02-10T18:13:52.983440356+01:00","Value":1}],"Temporality":"CumulativeTemporality","IsMonotonic":true}}]}]}
-{"time":"2025-02-10T18:13:52.983496393+01:00","level":"INFO","msg":"Shutdown","component":"Otel.Tracer"}
-{"time":"2025-02-10T18:13:52.983502236+01:00","level":"INFO","msg":"Shutdown","component":"HealthCheck"}
-{"time":"2025-02-10T18:13:52.983547219+01:00","level":"INFO","msg":"Server closed","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}
-```
-
-The `TracerProvider` is under development at the moment.
 
 ## Development
 
