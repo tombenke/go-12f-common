@@ -17,12 +17,23 @@ func TestOtelConfigWithDefaults(t *testing.T) {
 	config.GetConfigFlagSet(fs)
 	require.NoError(t, config.LoadConfig(fs))
 	assert.Equal(t, oti.Config{
+		OtelTracesExporter:         oti.OTEL_TRACES_EXPORTER_DEFAULT,
+		OtelTracesSampler:          oti.OTEL_TRACES_SAMPLER_DEFAULT,
 		OtelMetricsExporter:        oti.OTEL_METRICS_EXPORTER_DEFAULT,
 		OtelExporterPrometheusPort: oti.OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
 	}, config)
 }
 
 func Test_Config_GetConfigFlagSet(t *testing.T) {
+	const EXPECTED_OTEL_TRACES_EXPORTER_FROM_ENV_VAR = "env_jaeger"
+	const EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG = "cli_jaeger"
+
+	const EXPECTED_OTEL_TRACES_SAMPLER_FROM_ENV_VAR = "env_always_on"
+	const EXPECTED_OTEL_TRACES_SAMPLER_FROM_CLI_ARG = "cli_always_on"
+
+	const EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_ENV_VAR = "env_sampler_arg"
+	const EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_CLI_ARG = "cli_sampler_arg"
+
 	const EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR = "env_prometheus"
 	const EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG = "cli_prometheus"
 
@@ -30,10 +41,16 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 	const EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG = 5678
 
 	envVars := map[string]string{
+		"OTEL_TRACES_EXPORTER":          EXPECTED_OTEL_TRACES_EXPORTER_FROM_ENV_VAR,
+		"OTEL_TRACES_SAMPLER":           EXPECTED_OTEL_TRACES_SAMPLER_FROM_ENV_VAR,
+		"OTEL_TRACES_SAMPLER_ARG":       EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_ENV_VAR,
 		"OTEL_METRICS_EXPORTER":         EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR,
 		"OTEL_EXPORTER_PROMETHEUS_PORT": fmt.Sprintf("%v", EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_ENV_VAR),
 	}
 	cliArgs := []string{
+		fmt.Sprintf("--%v=%v", oti.OTEL_TRACES_EXPORTER_ARG_NAME, EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", oti.OTEL_TRACES_SAMPLER_ARG_NAME, EXPECTED_OTEL_TRACES_SAMPLER_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", oti.OTEL_TRACES_SAMPLER_ARG_ARG_NAME, EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_CLI_ARG),
 		fmt.Sprintf("--%v=%v", oti.OTEL_METRICS_EXPORTER_ARG_NAME, EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG),
 		fmt.Sprintf("--%v=%v", oti.OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME, EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG),
 	}
@@ -44,12 +61,18 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 	}{
 		"default values": {
 			expectedConfig: oti.Config{
+				OtelTracesExporter:         oti.OTEL_TRACES_EXPORTER_DEFAULT,
+				OtelTracesSampler:          oti.OTEL_TRACES_SAMPLER_DEFAULT,
+				OtelTracesSamplerArg:       oti.OTEL_TRACES_SAMPLER_ARG_DEFAULT,
 				OtelMetricsExporter:        oti.OTEL_METRICS_EXPORTER_DEFAULT,
 				OtelExporterPrometheusPort: oti.OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
 			},
 		},
 		"from environment variables": {
 			expectedConfig: oti.Config{
+				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_ENV_VAR,
+				OtelTracesSampler:          EXPECTED_OTEL_TRACES_SAMPLER_FROM_ENV_VAR,
+				OtelTracesSamplerArg:       EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_ENV_VAR,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_ENV_VAR,
 			},
@@ -57,6 +80,9 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		},
 		"from cli args": {
 			expectedConfig: oti.Config{
+				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG,
+				OtelTracesSampler:          EXPECTED_OTEL_TRACES_SAMPLER_FROM_CLI_ARG,
+				OtelTracesSamplerArg:       EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_CLI_ARG,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG,
 			},
@@ -64,6 +90,9 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		},
 		"prefer cli args over env vars": {
 			expectedConfig: oti.Config{
+				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG,
+				OtelTracesSampler:          EXPECTED_OTEL_TRACES_SAMPLER_FROM_CLI_ARG,
+				OtelTracesSamplerArg:       EXPECTED_OTEL_TRACES_SAMPLER_ARG_FROM_CLI_ARG,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG,
 			},

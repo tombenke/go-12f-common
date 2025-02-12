@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tombenke/go-12f-common/must"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -12,17 +13,13 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
-	"google.golang.org/grpc"
 )
 
 // Initializes an OTLP MeterProvider
-func initOtlpMeterProvider(ctx context.Context, res *resource.Resource, conn *grpc.ClientConn) (*sdkmetric.MeterProvider, error) {
+func initOtlpMeterProvider(ctx context.Context, res *resource.Resource) (*sdkmetric.MeterProvider, error) {
 
-	metricExporter, err := otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn))
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metrics exporter: %w", err)
-	}
+	conn := must.MustVal(initOtelGrpcConn(ctx))
+	metricExporter := must.MustVal(otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn)))
 
 	meterProvider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),

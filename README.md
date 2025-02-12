@@ -190,6 +190,28 @@ Otel Exporter Prometheus Port:
 - type: Integer.
 - default value: `9464`.
 
+Otel Traces Exporter:
+- description: Specifies which exporter is used for tracing.
+  Possible values are: `otlp`: OTLP, `console`: Standard Output, `none`: No automatically configured exporter for tracing.
+- cli parameter: `--otel-traces-exporter`.
+- env. variable: `OTEL_TRACES_EXPORTER`.
+- type: String.
+- default value: `none`.
+
+OtelTracesSampler:
+- description: Specifies the Sampler used to sample traces by the SDK.
+ One of: `always_on | always_off | traceidratio | parentbased_always_on | parentbased_always_off | parentbased_traceidratio | parentbased_jaeger_remote | jaeger_remote | xray`.
+- cli parameter: `--otel-traces-sampler`.
+- env. variable: `OTEL_TRACES_SAMPLER`.
+- type: String.
+- default: `parentbased_always_on`.
+
+OtelTracesSamplerArg:
+- description: Specifies arguments, if applicable, to the sampler defined in by `--otel-traces-sampler`.
+- cli parameter: `--otel-traces-sampler-arg`
+- env. variable: `OTEL_TRACES_SAMPLER_ARG`.
+- default: `""`.
+
 It is also possible to set the so called `service.version` resource attribute.
 This version parameter can be injected into the application via the `-ldflag` argument of the go linker.
 The actual `version` variable is defined in the [buildinfo/buildinfo.go](buildinfo/buildinfo.go) file.
@@ -215,6 +237,7 @@ Run the scheduler application with `console` metric exporter to test how the OTE
 
 ```bash
 OTEL_SERVICE_NAME=hubcontrol:scheduler OTEL_RESOURCE_ATTRIBUTES=service.instance.id=b9d7402f-358c-4909-8e2f-66b3d2f5a6a8 ./examples/scheduler/scheduler --otel-metrics-exporter console --time-step 5s
+
 {"time":"2025-02-10T18:13:45.812187525+01:00","level":"INFO","msg":"Creating Application","config":{}}
 {"time":"2025-02-10T18:13:45.812249813+01:00","level":"INFO","msg":"Starting 12f application","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391"}
 {"time":"2025-02-10T18:13:45.812294432+01:00","level":"INFO","msg":"Starting up","appId":"16dd0c1f-6985-498a-a3ed-566ee905b391","component":"HealthCheck"}

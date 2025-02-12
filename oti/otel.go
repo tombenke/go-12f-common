@@ -46,24 +46,8 @@ func (o *Otel) Startup(ctx context.Context) {
 	logger.Info("Starting up")
 
 	// Create Resource for tracing and metrics
-	res, err := resource.New(ctx, resource.WithAttributes(
-		// The service name used to display traces in backends
-		//semconv.ServiceNameKey.String(o.config.OtelServiceName),
-		//semconv.ServiceInstanceIDKey.String("this-is-a-service-instance-ID"),
-		getResourceAttributes()...,
-	///		semconv.ServiceVersionKey.String(buildinfo.Version()),
-	))
-
-	if err != nil {
-		logger.Error("failed to create OTEL resource", "error", err)
-		panic(1)
-	}
-
-	res, err = resource.Merge(res, resource.Default())
-	if err != nil {
-		logger.Error("failed to merge OTEL resources", "error", err)
-		panic(1)
-	}
+	res := must.MustVal(resource.New(ctx, resource.WithAttributes(getResourceAttributes()...)))
+	res = must.MustVal(resource.Merge(res, resource.Default()))
 
 	// Startup Metrics
 	o.startupMetrics(ctx, res)
@@ -88,20 +72,11 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 
 	switch exporterType {
 	case "otlp":
-		conn, connErr := initOtelGrpcConn(ctx) // TODO: use it only in case of tracer or metrics uses otel exporter
-		if connErr != nil {
-			logger.Error("failed to create grpc connection", "error", connErr)
-			panic(1)
-		}
-
-		// TODO: Handle error as fatal
-		o.meterProvider, _ = initOtlpMeterProvider(ctx, res, conn)
+		o.meterProvider = must.MustVal(initOtlpMeterProvider(ctx, res))
 
 	case "prometheus":
-		// TODO: Handle error as fatal
-		o.meterProvider, _ = initPrometheusMeterProvider(ctx, res)
+		o.meterProvider = must.MustVal(initPrometheusMeterProvider(ctx, res))
 
-		// TODO: Setup prometheus metrics exporter server
 		_, cancelCtx := context.WithCancel(context.Background())
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.Handler())
@@ -124,8 +99,7 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 		}()
 
 	case "console":
-		// TODO: Handle error as fatal
-		o.meterProvider, _ = initConsoleMeterProvider(ctx, res)
+		o.meterProvider = must.MustVal(initConsoleMeterProvider(ctx, res))
 
 	case "none":
 		// Use no-op provider
@@ -155,8 +129,29 @@ func (o *Otel) shutdownMetrics(ctx context.Context) {
 // Startup Tracer
 func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
 	_, logger := o.getLogger(ctx)
-	logger.Info("Startup Tracer")
-	// TODO
+
+	exporterType := strings.ToLower(o.config.OtelTracesExporter)
+	logger.Info("Startup Tracing", "exporter", exporterType)
+
+	switch exporterType {
+	case "otlp":
+		o.tracerProvider = must.MustVal(initOtlpTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+	/*
+		case "jaeger":
+			o.tracerProvider = must.MustVal(initJaegerTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+
+		case "zipkin":
+			o.tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+	*/
+	case "console":
+		o.tracerProvider = must.MustVal(initConsoleTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+
+	case "none":
+		// Use no-op provider
+	default:
+		logger.Error("wrong tracer exporter type", "otel-traces-exporter", o.config.OtelTracesExporter)
+		panic(1)
+	}
 }
 
 // Shutdown Tracing
@@ -189,8 +184,15 @@ func initOtelGrpcConn(ctx context.Context) (*grpc.ClientConn, error) {
 
 func getResourceAttributes() []attribute.KeyValue {
 	attributes := []attribute.KeyValue{}
+
+	// Add service.version attribute if it is defined
 	if buildinfo.Version() != "" {
 		attributes = append(attributes, semconv.ServiceVersionKey.String(buildinfo.Version()))
 	}
+
+	// TODO: May add the following attributes
+	// semconv.ServiceInstanceIDKey.String("this-is-a-service-instance-ID"),
+	// ???
+
 	return attributes
 }
