@@ -16,8 +16,7 @@ import (
 // initOtlpTracerProvider Initializes an OTLP exporter, and configures the corresponding tracer provider.
 func initOtlpTracerProvider(ctx context.Context, res *resource.Resource, samplerStr string, samplerArg string) (*sdktrace.TracerProvider, error) {
 	// Set up a trace exporter
-	conn := must.MustVal(initOtelGrpcConn(ctx))
-	tracerExporter := must.MustVal(otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn)))
+	tracerExporter := must.MustVal(otlptracegrpc.New(ctx))
 
 	bsp := sdktrace.NewBatchSpanProcessor(tracerExporter)
 

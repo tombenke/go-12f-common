@@ -213,6 +213,104 @@ OtelTracesSamplerArg:
 - type: String.
 - default: `""`.
 
+For further options to configure METRICS you can use the following environment variables:
+
+- `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`:
+  Target to which the exporter sends telemetry.
+  The target syntax is defined in https://github.com/grpc/grpc/blob/master/doc/naming.md.
+  The value must contain a scheme (`"http"` or `"https"`) and host.
+  The value may additionally contain a port, and a path.
+  The value should not contain a query string or fragment.
+  (default: `"https://localhost:4317"`)
+
+ - `OTEL_EXPORTER_OTLP_METRICS_INSECURE`:
+  Setting "true" disables client transport security for the exporter's gRPC connection.
+  You can use this only when an endpoint is provided without the http or https scheme.
+  (default: `"false"`)
+
+- `OTEL_EXPORTER_OTLP_METRICS_HEADERS`:
+  Key-value pairs used as gRPC metadata associated with gRPC requests.
+  The value is expected to be represented in a format matching the W3C Baggage HTTP Header Content Format,
+  except that additional semi-colon delimited metadata is not supported.
+  Example value: `"key1=value1,key2=value2"`.
+  (default: none)
+
+- `OTEL_EXPORTER_OTLP_METRICS_TIMEOUT`:
+  Maximum time in milliseconds the OTLP exporter waits for each batch export.
+  (default: `"10000"`)
+
+- `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION`:
+  The gRPC compressor the exporter uses. Supported value: `"gzip"`.
+  (default: none)
+
+- `OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE`:
+  The filepath to the trusted certificate to use when verifying a server's TLS credentials.
+  (default: none)
+
+- `OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE`:
+  The filepath to the client certificate/chain trust for client's private key to use in mTLS communication in PEM format.
+  (default: none)
+
+- `OTEL_EXPORTER_OTLP_METRICS_CLIENT_KEY`:
+  The filepath to the client's private key to use in mTLS communication in PEM format. 
+  (default: none)
+
+- `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE`
+  Aggregation temporality to use on the basis of instrument kind.
+  (default: `"cumulative"`)
+
+  Supported values:
+
+    - `"cumulative"` - Cumulative aggregation temporality for all instrument kinds,
+    - `"delta"` - Delta aggregation temporality for Counter, Asynchronous Counter and Histogram instrument kinds; Cumulative aggregation for UpDownCounter and Asynchronous UpDownCounter instrument kinds,
+    - `"lowmemory"` - Delta aggregation temporality for Synchronous Counter and Histogram instrument kinds; Cumulative aggregation temporality for Synchronous UpDownCounter, Asynchronous Counter, and Asynchronous UpDownCounter instrument kinds. 
+
+- `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION`
+  Default aggregation to use for histogram instruments.
+  (default: `"explicit_bucket_histogram"`)
+
+  Supported values:
+
+    - `"explicit_bucket_histogram"` - Explicit Bucket Histogram Aggregation,
+    - `"base2_exponential_bucket_histogram"` - Base2 Exponential Bucket Histogram Aggregation.
+
+For further details see the correspondig documentation of
+[OTLP Metric gRPC Exporter](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc)
+
+For further options to configure TRACING you can use the following environment variables:
+
+- `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`:
+  Target to which the exporter sends telemetry.
+  The target syntax is defined in https://github.com/grpc/grpc/blob/master/doc/naming.md.
+  The value must contain a scheme (`"http"` or `"https"`) and host.
+  The value may additionally contain a port, and a path.
+  The value should not contain a query string or fragment (default: `"https://localhost:4317"`).
+
+- `OTEL_EXPORTER_OTLP_TRACES_INSECURE`:
+  Setting "true" disables client transport security for the exporter's gRPC connection.
+  You can use this only when an endpoint is provided without the http or https scheme (default: `"false"`).
+
+- `OTEL_EXPORTER_OTLP_TRACES_HEADERS`:
+  Key-value pairs used as gRPC metadata associated with gRPC requests (default: none).
+
+- `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT`:
+  Maximum time in milliseconds the OTLP exporter waits for each batch export (default: `"10000"`).
+
+- `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION`:
+  The gRPC compressor the exporter uses. Supported value: `"gzip"` (default: none).
+
+- `OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE`:
+  The filepath to the trusted certificate to use when verifying a server's TLS credentials (default: none).
+
+- `OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE`:
+  The filepath to the client certificate/chain trust for client's private key to use in mTLS communication in PEM format (default: none).
+
+- `OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY`:
+  The filepath to the client's private key to use in mTLS communication in PEM format (default: none).
+
+For further details see the correspondig documentation of
+[OTLP Trace gRPC Exporter](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc).
+
 It is also possible to set the so called `service.version` resource attribute.
 This version parameter can be injected into the application via the `-ldflag` argument of the go linker.
 The actual `version` variable is defined in the [buildinfo/buildinfo.go](buildinfo/buildinfo.go) file.
@@ -282,4 +380,6 @@ or
 - [slog](https://pkg.go.dev/log/slog)
 - [Open Telemetry](https://opentelemetry.io/)
 - [OpenTelemetry-Go](https://pkg.go.dev/go.opentelemetry.io)
+- [OTLP Trace gRPC Exporter](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc)
+- [OTLP Metric gRPC Exporter](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc)
 

@@ -18,8 +18,7 @@ import (
 // Initializes an OTLP MeterProvider
 func initOtlpMeterProvider(ctx context.Context, res *resource.Resource) (*sdkmetric.MeterProvider, error) {
 
-	conn := must.MustVal(initOtelGrpcConn(ctx))
-	metricExporter := must.MustVal(otlpmetricgrpc.New(ctx, otlpmetricgrpc.WithGRPCConn(conn)))
+	metricExporter := must.MustVal(otlpmetricgrpc.New(ctx))
 
 	meterProvider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),

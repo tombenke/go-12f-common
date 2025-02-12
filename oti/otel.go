@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/grpc"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Otel struct {
@@ -163,23 +161,6 @@ func (o *Otel) shutdownTracer(ctx context.Context) {
 			slog.ErrorContext(ctx, "failed TracerProvider shutdown", "error", err)
 		}
 	}
-}
-
-// Initialize a gRPC connection to be used by both the tracer and meter providers.
-func initOtelGrpcConn(ctx context.Context) (*grpc.ClientConn, error) {
-	// It connects the OpenTelemetry Collector through local gRPC connection.
-	// TODO: Replace `localhost:4317` with config parameters
-	otelCollectorUrl := "localhost:4317"
-	slog.InfoContext(ctx, "Connect to OTEL Collector", "url", otelCollectorUrl)
-	conn, err := grpc.NewClient(otelCollectorUrl,
-		// Note the use of insecure transport here. TLS is recommended in production.
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gRPC connection to collector: %w", err)
-	}
-
-	return conn, err
 }
 
 func getResourceAttributes() []attribute.KeyValue {
