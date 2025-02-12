@@ -254,6 +254,7 @@ There are examples about the usage of the package in the [examples/](examples/) 
 
 - [examples/simple](examples/simple/): Is a bare-minimum 12-factor application, that is build on top of the go-12f-common package.
 - [examples/scheduler](examples/scheduler/): Demonstrates how to implement concurrent, communication processes as system components.
+  It also shows how to use the OTEL instrumentation, collect metrics and do tracing.
 
 Build the binaries of the examples:
 
