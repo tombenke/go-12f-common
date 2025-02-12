@@ -211,7 +211,7 @@ OtelTracesSamplerArg:
 - cli parameter: N.A.
 - env. variable: `OTEL_TRACES_SAMPLER_ARG`.
 - type: Float.
-- default: `""`.
+- default: `1.0`.
 
 For further options to configure METRICS you can use the following environment variables:
 
