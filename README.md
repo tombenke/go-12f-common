@@ -200,17 +200,17 @@ Otel Traces Exporter:
 
 OtelTracesSampler:
 - description: Specifies the Sampler used to sample traces by the SDK.
- One of: `always_on | always_off | traceidratio | parentbased_always_on | parentbased_always_off | parentbased_traceidratio | parentbased_jaeger_remote | jaeger_remote | xray`.
-- cli parameter: `--otel-traces-sampler`.
+ One of: `always_on | always_off | traceidratio | parentbased_always_on | parentbased_always_off | parentbased_traceidratio`.
+- cli parameter: N.A.
 - env. variable: `OTEL_TRACES_SAMPLER`.
 - type: String.
 - default: `parentbased_always_on`.
 
 OtelTracesSamplerArg:
 - description: Specifies arguments, if applicable, to the sampler defined in by `--otel-traces-sampler`.
-- cli parameter: `--otel-traces-sampler-arg`
+- cli parameter: N.A.
 - env. variable: `OTEL_TRACES_SAMPLER_ARG`.
-- type: String.
+- type: Float.
 - default: `""`.
 
 For further options to configure METRICS you can use the following environment variables:

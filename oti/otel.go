@@ -133,16 +133,16 @@ func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
 
 	switch exporterType {
 	case "otlp":
-		o.tracerProvider = must.MustVal(initOtlpTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+		o.tracerProvider = must.MustVal(initOtlpTracerProvider(ctx, res))
 	/*
 		case "jaeger":
-			o.tracerProvider = must.MustVal(initJaegerTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+			o.tracerProvider = must.MustVal(initJaegerTracerProvider(ctx, res))
 
 		case "zipkin":
-			o.tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+			o.tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res))
 	*/
 	case "console":
-		o.tracerProvider = must.MustVal(initConsoleTracerProvider(ctx, res, o.config.OtelTracesSampler, o.config.OtelTracesSamplerArg))
+		o.tracerProvider = must.MustVal(initConsoleTracerProvider(ctx, res))
 
 	case "none":
 		// Use no-op provider
@@ -171,7 +171,8 @@ func getResourceAttributes() []attribute.KeyValue {
 		attributes = append(attributes, semconv.ServiceVersionKey.String(buildinfo.Version()))
 	}
 
-	// TODO: May add the following attributes
+	// TODO: May add further attributes here
+
 	// semconv.ServiceInstanceIDKey.String("this-is-a-service-instance-ID"),
 	// ???
 

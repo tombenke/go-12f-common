@@ -3,7 +3,7 @@ package oti
 import (
 	"context"
 	"fmt"
-	"time"
+	////"time"
 
 	"github.com/tombenke/go-12f-common/must"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -54,10 +54,10 @@ func initConsoleMeterProvider(ctx context.Context, res *resource.Resource) (*sdk
 	}
 
 	meterProvider := sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter,
-			// Default is 1m. Set to 3s for demonstrative purposes.
-			// TODO: Replace with config parameter value
-			sdkmetric.WithInterval(3*time.Second))),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
+		// NOTE: Use the OTEL_METRIC_EXPORT_INTERVAL environment variable to control the interval
+		// sdkmetric.WithInterval(3*time.Second)
+
 		sdkmetric.WithResource(res),
 	)
 
