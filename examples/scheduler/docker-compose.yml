@@ -1,0 +1,34 @@
+version: "3"
+
+networks:
+  scheduler-network:
+#    external: true
+
+services:
+  scheduler:
+    build: .
+    environment:
+      - LOG_LEVEL=debug
+      - TIME_STEP=5s
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
+      - OTEL_TRACES_EXPORTER=none
+    ports:
+      - 8080:8080
+      - 9464:9464
+    networks:
+      scheduler-network:
+
+  prometheus:
+    image: prom/prometheus:v2.49.0
+    volumes:
+      - ./config/prometheus/:/etc/prometheus/
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - 9090:9090
+    networks:
+      scheduler-network:
+
+

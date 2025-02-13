@@ -13,6 +13,9 @@ vars:
 
   UML_DIR: ./out/uml
 
+env:
+  CGO_ENABLED: 0
+
 dotenv:
   - .local.env
   - .secrets
