@@ -7,6 +7,26 @@ The two components are:
 - [timer](timer/): Emits an event every `time-step` period, that triggers the sending of the actual time value to the worker process.
 - [worker](worker): Receives the time message, and prints it.
 
+# Grafana
+In the project root folder, execute the following command for building the scheduler example:
+```bash
+docker build -t scheduler:latest -f examples/scheduler/Dockerfile .
+```
+
+The following docker compose files contain Grafana, Prometheus, Alloy and the scheduler images.
+Grafana is exposed on Port 3000.
+
+Otlp example:
+```bash
+docker compose -f examples/scheduler/docker-compose-otlp.yml up
+```
+
+Prometheus example:
+```bash
+docker compose -f examples/scheduler/docker-compose-prometheus.yml up
+```
+
+
 Get help on parameters:
 
 ```bash

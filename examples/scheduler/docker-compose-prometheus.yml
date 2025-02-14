@@ -1,0 +1,74 @@
+version: "3"
+
+networks:
+  scheduler-network:
+
+
+services:
+  scheduler:
+    image: scheduler:latest
+    environment:
+      - LOG_LEVEL=debug
+      - TIME_STEP=5s
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
+      - OTEL_TRACES_EXPORTER=none
+    ports:
+      - 8080:8080
+      - 9464:9464
+    networks:
+      scheduler-network:
+
+
+  alloy:
+    volumes:
+      - ./config/alloy/config_prometheus.alloy:/etc/alloy/config.alloy
+    image: grafana/alloy:latest
+    ports:
+      - "12345:12345"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    networks:
+      scheduler-network:
+
+
+  prometheus:
+    image: prom/prometheus:v2.49.0
+    command:
+      - --web.enable-remote-write-receiver
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      scheduler-network:
+
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          orgId: 1
+          url: http://prometheus:9090
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:11.0.0
+    ports:
+      - "3000:3000"
+    networks:
+      scheduler-network:

@@ -1,0 +1,13 @@
+prometheus.scrape "server_go" {
+  targets = [
+    {"__address__" = "scheduler:9464", "instance" = "scheduler"},
+  ]
+  forward_to = [prometheus.remote_write.prometheus.receiver]
+  scrape_interval = "10s"
+}
+
+prometheus.remote_write "prometheus" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
