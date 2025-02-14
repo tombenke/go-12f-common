@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/buildinfo"
-	"github.com/tombenke/go-12f-common/examples/scheduler/timer"
-	"github.com/tombenke/go-12f-common/examples/scheduler/worker"
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/apprun"
+	"github.com/tombenke/go-12f-common/v2/buildinfo"
+	"github.com/tombenke/go-12f-common/v2/examples/scheduler/timer"
+	"github.com/tombenke/go-12f-common/v2/examples/scheduler/worker"
+	"github.com/tombenke/go-12f-common/v2/log"
 )
 
 //var Version string = "0.0.0"

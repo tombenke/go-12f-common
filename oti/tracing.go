@@ -2,7 +2,7 @@ package oti
 
 import (
 	"context"
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/must"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"

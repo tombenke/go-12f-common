@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tombenke/go-12f-common/oti"
+	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 func TestOtelConfigWithDefaults(t *testing.T) {

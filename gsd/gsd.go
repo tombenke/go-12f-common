@@ -8,7 +8,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/log"
 )
 
 // Register is an observer go routine to get notifed when termination signals arrive,

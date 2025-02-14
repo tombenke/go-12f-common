@@ -13,11 +13,11 @@ import (
 	"github.com/failsafe-go/failsafe-go/retrypolicy"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/tombenke/go-12f-common/config"
-	"github.com/tombenke/go-12f-common/gsd"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/oti"
+	"github.com/tombenke/go-12f-common/v2/config"
+	"github.com/tombenke/go-12f-common/v2/gsd"
+	"github.com/tombenke/go-12f-common/v2/healthcheck"
+	"github.com/tombenke/go-12f-common/v2/log"
+	"github.com/tombenke/go-12f-common/v2/oti"
 	"go.uber.org/multierr"
 )
 

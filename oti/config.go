@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/pflag"
-	"github.com/tombenke/go-12f-common/config"
+	"github.com/tombenke/go-12f-common/v2/config"
 )
 
 const (

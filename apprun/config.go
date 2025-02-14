@@ -2,8 +2,8 @@ package apprun
 
 import (
 	"github.com/spf13/pflag"
-	"github.com/tombenke/go-12f-common/config"
-	"github.com/tombenke/go-12f-common/oti"
+	"github.com/tombenke/go-12f-common/v2/config"
+	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 const (

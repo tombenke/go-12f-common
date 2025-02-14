@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/log"
+	"github.com/tombenke/go-12f-common/v2/must"
 	"golang.org/x/exp/maps"
 )
 

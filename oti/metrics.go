@@ -5,7 +5,7 @@ import (
 	"fmt"
 	////"time"
 
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/must"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"

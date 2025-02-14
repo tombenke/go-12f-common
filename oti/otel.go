@@ -10,9 +10,9 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/tombenke/go-12f-common/buildinfo"
-	"github.com/tombenke/go-12f-common/log"
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/buildinfo"
+	"github.com/tombenke/go-12f-common/v2/log"
+	"github.com/tombenke/go-12f-common/v2/must"
 
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"

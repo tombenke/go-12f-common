@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/must"
 )
 
 type errCloser struct{}

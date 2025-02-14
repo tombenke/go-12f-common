@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tombenke/go-12f-common/must"
+	"github.com/tombenke/go-12f-common/v2/must"
 )
 
 func Test_Config_GetConfigFlagSet(t *testing.T) {

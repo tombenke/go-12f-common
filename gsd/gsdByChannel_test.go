@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/log"
 )
 
 func TestRegisterByChannel(t *testing.T) {

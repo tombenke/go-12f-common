@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/healthcheck"
+	"github.com/tombenke/go-12f-common/v2/log"
 )
 
 func TestHealthCheckServer(t *testing.T) {

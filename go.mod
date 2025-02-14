@@ -1,4 +1,4 @@
-module github.com/tombenke/go-12f-common
+module github.com/tombenke/go-12f-common/v2
 
 go 1.23.1
 
@@ -20,7 +20,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.34.0
 	go.uber.org/multierr v1.9.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
-	google.golang.org/grpc v1.69.4
 )
 
 require (
@@ -42,6 +41,7 @@ require (
 	golang.org/x/net v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
+	google.golang.org/grpc v1.69.4 // indirect
 	google.golang.org/protobuf v1.36.3 // indirect
 )
 

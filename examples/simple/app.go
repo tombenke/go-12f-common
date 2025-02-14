@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/sagikazarmark/slog-shim"
-	"github.com/tombenke/go-12f-common/apprun"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/apprun"
+	"github.com/tombenke/go-12f-common/v2/healthcheck"
+	"github.com/tombenke/go-12f-common/v2/log"
 )
 
 type Application struct {

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"github.com/tombenke/go-12f-common/healthcheck"
-	"github.com/tombenke/go-12f-common/log"
+	"github.com/tombenke/go-12f-common/v2/healthcheck"
+	"github.com/tombenke/go-12f-common/v2/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 )
