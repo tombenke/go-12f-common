@@ -29,6 +29,23 @@ type Otel struct {
 	prometheusServer *http.Server
 }
 
+type MetricExporterType string
+
+var (
+	MetricExporterTypeOTLP       MetricExporterType = "otlp"
+	MetricExporterTypePrometheus MetricExporterType = "prometheus"
+	MetricExporterTypeConsole    MetricExporterType = "console"
+	MetricExporterTypeNone       MetricExporterType = "none"
+)
+
+type TraceExporterType string
+
+var (
+	TraceExporterTypeOTLP    TraceExporterType = "otlp"
+	TraceExporterTypeConsole TraceExporterType = "console"
+	TraceExporterTypeNone    TraceExporterType = "none"
+)
+
 // Create a Otel instance
 func NewOtel(wg *sync.WaitGroup, config Config) Otel {
 	return Otel{wg: wg, config: config}
@@ -68,11 +85,11 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 	exporterType := strings.ToLower(o.config.OtelMetricsExporter)
 	logger.Info("Startup Metrics", "exporter", exporterType)
 
-	switch exporterType {
-	case "otlp":
+	switch MetricExporterType(exporterType) {
+	case MetricExporterTypeOTLP:
 		o.meterProvider = must.MustVal(initOtlpMeterProvider(ctx, res))
 
-	case "prometheus":
+	case MetricExporterTypePrometheus:
 		o.meterProvider = must.MustVal(initPrometheusMeterProvider(ctx, res))
 
 		_, cancelCtx := context.WithCancel(context.Background())
@@ -96,15 +113,18 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 			cancelCtx()
 		}()
 
-	case "console":
+	case MetricExporterTypeConsole:
 		o.meterProvider = must.MustVal(initConsoleMeterProvider(ctx, res))
 
-	case "none":
+	case MetricExporterTypeNone:
 		// Use no-op provider
 	default:
 		logger.Error("wrong metric exporter type", "otel-metric-exporter", o.config.OtelMetricsExporter)
 		panic(1)
 	}
+
+	// Initializes InstrumentRegistries
+	GetMeter(o.meterProvider)
 }
 
 // Shutdown Metrics
@@ -131,8 +151,8 @@ func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
 	exporterType := strings.ToLower(o.config.OtelTracesExporter)
 	logger.Info("Startup Tracing", "exporter", exporterType)
 
-	switch exporterType {
-	case "otlp":
+	switch TraceExporterType(exporterType) {
+	case TraceExporterTypeOTLP:
 		o.tracerProvider = must.MustVal(initOtlpTracerProvider(ctx, res))
 	/*
 		case "jaeger":
@@ -141,10 +161,10 @@ func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
 		case "zipkin":
 			o.tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res))
 	*/
-	case "console":
+	case TraceExporterTypeConsole:
 		o.tracerProvider = must.MustVal(initConsoleTracerProvider(ctx, res))
 
-	case "none":
+	case TraceExporterTypeNone:
 		// Use no-op provider
 	default:
 		logger.Error("wrong tracer exporter type", "otel-traces-exporter", o.config.OtelTracesExporter)
