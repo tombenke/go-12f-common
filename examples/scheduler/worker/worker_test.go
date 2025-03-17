@@ -56,14 +56,14 @@ func createWorker(t *testing.T) (*Worker, *sync.WaitGroup) {
 }
 
 // Create, Start and stop a worker instance
-func (s *WorkerTestSuite) TestWorkerStartStop() {
+func (s *WorkerTestSuite) TestStartStop() {
 	t := s.T()
 	worker, wg := createWorker(t)
 	s.NoError(worker.Shutdown(s.arCtx))
 	wg.Wait()
 }
 
-func (s *WorkerTestSuite) TestWorkerReceive() {
+func (s *WorkerTestSuite) TestReceive() {
 	t := s.T()
 	worker, wg := createWorker(t)
 	worker.currentTimeCh <- model.TimerRequest{Ctx: s.arCtx, CurrentTime: time.Now()}

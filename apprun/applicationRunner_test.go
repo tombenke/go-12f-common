@@ -10,11 +10,40 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/tombenke/go-12f-common/v2/apprun"
+	"github.com/tombenke/go-12f-common/v2/log"
 	"github.com/tombenke/go-12f-common/v2/must"
+	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 type Config struct{}
+
+type AppRunnerSuite struct {
+	suite.Suite
+	arWG  *sync.WaitGroup
+	arCtx context.Context
+	oti   oti.Otel
+}
+
+func (s *AppRunnerSuite) SetupSuite() {
+	s.arWG = &sync.WaitGroup{}
+	s.arCtx, _ = log.WithLogger(context.Background(), slog.Default().With(oti.KeyTestSuite, "AppTestSuite"))
+
+	s.oti = oti.NewOtel(s.arWG, oti.Config{
+		OtelTracesExporter:  string(oti.TraceExporterTypeConsole),
+		OtelMetricsExporter: string(oti.MetricExporterTypeConsole),
+	})
+	s.oti.Startup(s.arCtx)
+}
+
+func (s *AppRunnerSuite) TearDownSuite() {
+	s.oti.Shutdown(s.arCtx)
+}
+
+func TestAppRunner(t *testing.T) {
+	suite.Run(t, new(AppRunnerSuite))
+}
 
 type TestApp struct {
 }
@@ -27,7 +56,8 @@ func (a *TestApp) Components(ctx context.Context) []apprun.ComponentLifecycleMan
 	return nil
 }
 
-func TestApplicationRunner_StartStop(t *testing.T) {
+func (s *AppRunnerSuite) TestStartStop() {
+	t := s.T()
 	testApp := NewTestApp()
 
 	flagSet := pflag.NewFlagSet("root", pflag.ContinueOnError)
