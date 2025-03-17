@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 	"sync"
-	"time"
 
 	"github.com/tombenke/go-12f-common/v2/apprun"
 	"github.com/tombenke/go-12f-common/v2/buildinfo"
+	"github.com/tombenke/go-12f-common/v2/examples/scheduler/model"
 	"github.com/tombenke/go-12f-common/v2/examples/scheduler/timer"
 	"github.com/tombenke/go-12f-common/v2/examples/scheduler/worker"
 	"github.com/tombenke/go-12f-common/v2/log"
@@ -17,7 +17,7 @@ import (
 
 type Application struct {
 	config        *Config
-	currentTimeCh chan (time.Time)
+	currentTimeCh chan model.TimerRequest
 
 	// The internal components of the application
 	components []apprun.ComponentLifecycleManager
@@ -53,7 +53,7 @@ func (a *Application) getLogger(ctx context.Context) *slog.Logger {
 func NewApplication(config *Config) (apprun.Application, error) {
 	slog.Info("Creating Application", "config", *config)
 	// Create channel(s) for inter-component communication
-	currentTimeCh := make(chan (time.Time))
+	currentTimeCh := make(chan model.TimerRequest)
 
 	return &Application{
 		config:        config,

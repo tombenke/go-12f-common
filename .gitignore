@@ -25,5 +25,5 @@ vendor/
 # build directory
 build
 
-# Go workspace file
-go.work
+# IDE
+.vscode/
