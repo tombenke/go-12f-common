@@ -5,6 +5,7 @@ import (
 	"path"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 )
 
 // Version is set by the linker.
@@ -12,6 +13,12 @@ var version string = ""
 
 // AppName is set by the linker.
 var appName string = ""
+
+var BuildInfo *debug.BuildInfo
+
+func init() {
+	BuildInfo, _ = debug.ReadBuildInfo()
+}
 
 func Version() string {
 	return version
@@ -31,4 +38,8 @@ func ModulePath(fn any) string {
 	modulePath := path.Dir(path.Dir(ffp.Name()))
 
 	return modulePath
+}
+
+func MainPath() string {
+	return BuildInfo.Main.Path
 }

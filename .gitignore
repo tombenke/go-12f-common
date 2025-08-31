@@ -27,3 +27,6 @@ build
 
 # Go workspace file
 go.work
+
+# VSCode config
+.vscode/

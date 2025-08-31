@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/v2/healthcheck"
 	"github.com/tombenke/go-12f-common/v2/log"
+	"github.com/tombenke/go-12f-common/v2/oti"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -104,5 +105,5 @@ func (t *Worker) Check(ctx context.Context) error {
 }
 
 func (t *Worker) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, "component", "Worker")
+	return log.With(ctx, string(oti.FieldComponent), "Worker")
 }

@@ -1,10 +1,13 @@
 package oti
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/v2/config"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 const (
@@ -19,6 +22,58 @@ const (
 	OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME = "otel-exporter-prometheus-port"
 	OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT  = 9464
 	OTEL_EXPORTER_PROMETHEUS_PORT_HELP     = "the port used by the Prometheus exporter"
+
+	FieldTraceID        = attribute.Key("trace.id")
+	FieldSpanID         = attribute.Key("span.id")
+	FieldSpanKind       = attribute.Key("span.kind")
+	FieldSpan           = attribute.Key("span")
+	FieldSpanErr        = attribute.Key("span.err")
+	FieldValue          = attribute.Key("value")
+	FieldDuration       = attribute.Key("duration")
+	FieldMetricName     = attribute.Key("metric.name")
+	FieldMetricExporter = attribute.Key("metric.exporter")
+	FieldSubject        = attribute.Key("subject")
+	FieldSubscrSubject  = attribute.Key("subscr.subject")
+	FieldSubscrQueue    = attribute.Key("subscr.queue")
+	FieldReply          = attribute.Key("reply")
+	FieldApp            = attribute.Key("app")
+	FieldService        = semconv.ServiceNameKey
+	FieldVersion        = attribute.Key("version")
+	FieldComponent      = attribute.Key("component")
+	FieldNetLayer       = attribute.Key("network.layer")
+	FieldExporter       = attribute.Key("exporter")
+	FieldStatusCode     = semconv.HTTPResponseStatusCodeKey
+	FieldReqLen         = semconv.HTTPRequestBodySizeKey
+	FieldRespLen        = semconv.HTTPResponseBodySizeKey
+	FieldHttpMethod     = semconv.HTTPRequestMethodKey
+	FieldUrlFull        = semconv.URLFullKey
+	FieldUrlPath        = semconv.URLPathKey
+	FieldUrlHost        = semconv.URLDomainKey
+	FieldUrlPattern     = semconv.URLTemplateKey
+	FieldMsgType        = attribute.Key("message.type")
+
+	FieldMessageType = "messageType"
+
+	FieldError = attribute.Key("error")
+
+	EventOK = "ok"
+
+	MsgOutReq    = "HTTP_OUT_REQ"
+	MsgOutResp   = "HTTP_OUT_RESP"
+	MsgInReq     = "HTTP_IN_REQ"
+	MsgInResp    = "HTTP_IN_RESP"
+	MsgSpanIn    = "SPAN_IN"
+	MsgSpanNew   = "SPAN_NEW"
+	MsgSpanStart = "SPAN_START"
+
+	MsgOtelError = "OTEL_ERROR"
+)
+
+var (
+	ErrOtelConfig = errors.New("invalid otel configuration")
+
+	FieldNetOut = semconv.NetworkIoDirectionTransmit
+	FieldNetIn  = semconv.NetworkIoDirectionReceive
 )
 
 // Config holds the configuration parameters for the Open Telemetry instrumentation
