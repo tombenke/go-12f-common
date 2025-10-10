@@ -180,19 +180,19 @@ func (ar *ApplicationRunner) Run() error {
 // Check components health
 func (ar *ApplicationRunner) waitUntilComponentsAreHealthy(ctx context.Context) error {
 	// TODO: Make this configurable?
-	policy := retrypolicy.Builder[any]().
+	policy := retrypolicy.NewBuilder[any]().
 		WithMaxRetries(-1).
 		WithBackoff(25*time.Millisecond, 500*time.Millisecond).
 		WithMaxDuration(10 * time.Second).
 		Build()
 
-	if err := failsafe.Run(func() error {
+	if err := failsafe.With(policy).Run(func() error {
 		var errs error
 		for _, c := range ar.app.Components(ctx) {
 			multierr.AppendInto(&errs, c.Check(ctx))
 		}
 		return errs
-	}, policy); err != nil {
+	}); err != nil {
 		return fmt.Errorf("one or more components are not healthy. %w", err)
 	}
 	return nil
