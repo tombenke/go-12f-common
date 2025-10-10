@@ -30,14 +30,14 @@ type Worker struct {
 	config        *Config
 	appWg         *sync.WaitGroup
 	err           error
-	doneCh        chan interface{}
+	doneCh        chan any
 	currentTimeCh chan model.TimerRequest
 	runCount      metric_api.Int64Counter
 }
 
 // Create a new Worker instance
 func NewWorker(config *Config, currentTimeCh chan model.TimerRequest) *Worker {
-	doneCh := make(chan interface{})
+	doneCh := make(chan any)
 	return &Worker{
 		config:        config,
 		err:           healthcheck.ServiceNotAvailableError{},
@@ -103,11 +103,11 @@ func (t *Worker) run(ctx context.Context) {
 		case currentTime := <-t.currentTimeCh:
 			logger.Debug("Tick", "current.time", currentTime.CurrentTime)
 			t.runCount.Add(ctx, 1)
-			obsProcessTimerRequest(
+			if _, err := obsProcessTimerRequest(
 				t, t.processTimerRequest,
-			)(ctx, currentTime)
-			// TODO remove continue, because it is not necessary (not C)
-			continue
+			)(ctx, currentTime); err != nil {
+				logger.Error("Error processing timer request", "err", err)
+			}
 		case <-t.doneCh:
 			logger.Debug("Shutting down")
 			return

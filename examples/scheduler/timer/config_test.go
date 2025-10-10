@@ -2,7 +2,6 @@ package timer
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -58,8 +57,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			cfg := &Config{}
 
 			for k, v := range testCase.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				t.Setenv(k, v)
 			}
 
 			// when

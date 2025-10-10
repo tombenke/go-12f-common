@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -60,8 +59,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			cfg := &Config{}
 
 			for k, v := range testCase.envVars {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				t.Setenv(k, v)
 			}
 
 			// when
