@@ -29,4 +29,5 @@ build
 go.work
 
 # VSCode config
+# IDE
 .vscode/

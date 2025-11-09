@@ -107,7 +107,11 @@ func (h *HealthCheck) waitUntilServerStarted(ctx context.Context) {
 				continue
 			}
 			logger.Debug("Checking response", "statusCode", resp.StatusCode)
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				logger.Error("Failed to close response body", "err", err)
+				return
+			}
+
 			if resp.StatusCode != http.StatusOK {
 				logger.Error("Server response is not OK", "statusCode", resp.StatusCode)
 				continue

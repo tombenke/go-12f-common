@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tombenke/go-12f-common/v2/examples/scheduler/model"
 	"github.com/tombenke/go-12f-common/v2/healthcheck"
 	"github.com/tombenke/go-12f-common/v2/log"
 )
@@ -17,12 +18,12 @@ type Timer struct {
 	appWg         *sync.WaitGroup
 	err           error
 	doneCh        chan interface{}
-	currentTimeCh chan time.Time
+	currentTimeCh chan model.TimerRequest
 	ticker        *time.Ticker
 }
 
 // Create a new Timer instance
-func NewTimer(config *Config, currentTimeCh chan time.Time) *Timer {
+func NewTimer(config *Config, currentTimeCh chan model.TimerRequest) *Timer {
 	doneCh := make(chan interface{})
 	return &Timer{config: config, err: healthcheck.ServiceNotAvailableError{}, doneCh: doneCh, currentTimeCh: currentTimeCh}
 }
@@ -71,7 +72,7 @@ func (t *Timer) run(ctx context.Context) {
 		// Distribute the current simulation time value
 		case currentTime := <-t.ticker.C:
 			logger.Debug("Tick", "currentTime", currentTime)
-			t.currentTimeCh <- currentTime
+			t.currentTimeCh <- model.TimerRequest{Ctx: ctx, CurrentTime: currentTime}
 			continue
 
 		// Catch the shutdown signal

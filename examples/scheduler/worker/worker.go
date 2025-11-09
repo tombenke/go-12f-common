@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"log/slog"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -10,12 +11,19 @@ import (
 	"github.com/tombenke/go-12f-common/v2/healthcheck"
 	"github.com/tombenke/go-12f-common/v2/log"
 	"github.com/tombenke/go-12f-common/v2/oti"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
+	metric_api "go.opentelemetry.io/otel/metric"
+
+	"github.com/tombenke/go-12f-common/v2/examples/scheduler/model"
+	"github.com/tombenke/go-12f-common/v2/oti"
+)
+
+const (
+	RunCountName = "run"
 )
 
 var (
-	runCount metric.Int64Counter
+	processMinDuration = 100 * time.Millisecond
+	processMaxDuration = 500 * time.Millisecond
 )
 
 // The Worker component
@@ -23,14 +31,20 @@ type Worker struct {
 	config        *Config
 	appWg         *sync.WaitGroup
 	err           error
-	doneCh        chan interface{}
-	currentTimeCh chan time.Time
+	doneCh        chan any
+	currentTimeCh chan model.TimerRequest
+	runCount      metric_api.Int64Counter
 }
 
 // Create a new Worker instance
-func NewWorker(config *Config, currentTimeCh chan time.Time) *Worker {
-	doneCh := make(chan interface{})
-	return &Worker{config: config, err: healthcheck.ServiceNotAvailableError{}, doneCh: doneCh, currentTimeCh: currentTimeCh}
+func NewWorker(config *Config, currentTimeCh chan model.TimerRequest) *Worker {
+	doneCh := make(chan any)
+	return &Worker{
+		config:        config,
+		err:           healthcheck.ServiceNotAvailableError{},
+		doneCh:        doneCh,
+		currentTimeCh: currentTimeCh,
+	}
 }
 
 // Initialize the config parameters, then evaluate the environment variables and bind them for CLI argument evaluation
@@ -47,12 +61,15 @@ func (t *Worker) Startup(ctx context.Context, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	logger.Debug("Startup", "config", t.config)
 
-	// Create a counter meter instrument
-	meter := otel.Meter("worker-run-count")
 	var err error
-	runCount, err = meter.Int64Counter("run", metric.WithDescription("The number of times the worker run"))
+	t.runCount, err = oti.Int64CounterGetInstrument(
+		RunCountName,
+		metric_api.WithDescription("The number of times the worker run"),
+	)
 	if err != nil {
-		logger.Error("failed runCount meter creation", "error", err)
+		logger.Error("failed runCount meter creation",
+			oti.KeyError, err, oti.KeyMetricName, RunCountName)
+		panic(err)
 	}
 
 	// Run the worker
@@ -85,16 +102,29 @@ func (t *Worker) run(ctx context.Context) {
 	for {
 		select {
 		case currentTime := <-t.currentTimeCh:
-			// TODO: Implement the processing feature
-			logger.Debug("Tick", "currentTime", currentTime)
-			runCount.Add(ctx, 1)
-			continue
-
+			logger.Debug("Tick", "current.time", currentTime.CurrentTime)
+			t.runCount.Add(ctx, 1)
+			if _, err := obsProcessTimerRequest(
+				t, t.processTimerRequest,
+			)(ctx, currentTime); err != nil {
+				logger.Error("Error processing timer request", "err", err)
+			}
 		case <-t.doneCh:
 			logger.Debug("Shutting down")
 			return
 		}
 	}
+}
+
+func (t *Worker) processTimerRequest(ctx context.Context, timerRequest model.TimerRequest) (time.Duration, error) {
+	_, logger := t.getLogger(ctx)
+	duration := processMinDuration + time.Duration(
+		rand.Int64N(int64(processMaxDuration-processMinDuration)),
+	)
+	time.Sleep(duration)
+	logger.Info("Processing", "current.time", timerRequest.CurrentTime, "processing.duration", duration)
+
+	return duration, nil
 }
 
 // Check if the component is ready to provide its services
@@ -104,6 +134,17 @@ func (t *Worker) Check(ctx context.Context) error {
 	return t.err
 }
 
+/*
+getLogger returns a logger instance with the component name set
+
+TODO delete this function, because:
+* violates request-scoped logger and tracer principle
+* multiple calls adds the component field multiple times
+*/
 func (t *Worker) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, string(oti.FieldComponent), "Worker")
+	return log.With(ctx, string(oti.FieldComponent), t.ComponentName())
+}
+
+func (t *Worker) ComponentName() string {
+	return "Worker"
 }

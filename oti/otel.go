@@ -47,6 +47,23 @@ const (
 	ConsoleStderr
 )
 
+type MetricExporterType string
+
+var (
+	MetricExporterTypeOTLP       MetricExporterType = "otlp"
+	MetricExporterTypePrometheus MetricExporterType = "prometheus"
+	MetricExporterTypeConsole    MetricExporterType = "console"
+	MetricExporterTypeNone       MetricExporterType = "none"
+)
+
+type TraceExporterType string
+
+var (
+	TraceExporterTypeOTLP    TraceExporterType = "otlp"
+	TraceExporterTypeConsole TraceExporterType = "console"
+	TraceExporterTypeNone    TraceExporterType = "none"
+)
+
 // Create a Otel instance
 func NewOtel(wg *sync.WaitGroup, config Config) Otel {
 	return Otel{wg: wg, config: config}
@@ -97,11 +114,11 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 	Log(ctx, 0, "Startup Metrics", FieldMetricExporter, exporterType)
 	var meterProvider *sdkmetric.MeterProvider
 
-	switch exporterType {
-	case "otlp":
+	switch MetricExporterType(exporterType) {
+	case MetricExporterTypeOTLP:
 		meterProvider = must.MustVal(initOtlpMeterProvider(ctx, res))
 
-	case "prometheus":
+	case MetricExporterTypePrometheus:
 		meterProvider = must.MustVal(initPrometheusMeterProvider(ctx, res))
 
 		if o.config.OtelExporterPrometheusPort > 0 {
@@ -127,10 +144,10 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 			}()
 		}
 
-	case "console":
+	case MetricExporterTypeConsole:
 		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleStdout))
 
-	case "none", "":
+	case MetricExporterTypeNone:
 		// Use no-op provider
 		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleNone))
 	default:
@@ -165,8 +182,8 @@ func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) contex
 	Log(ctx, 0, "Startup Tracing", FieldExporter, exporterType)
 
 	var tracerProvider *sdktrace.TracerProvider
-	switch exporterType {
-	case "otlp":
+	switch TraceExporterType(exporterType) {
+	case TraceExporterTypeOTLP:
 		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(otlptracegrpc.New(ctx)), res))
 
 		/*
@@ -177,10 +194,10 @@ func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) contex
 				tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res))
 		*/
 
-	case "console":
+	case TraceExporterTypeConsole:
 		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(stdouttrace.New(stdouttrace.WithPrettyPrint())), res))
 
-	case "none", "":
+	case TraceExporterTypeNone, "":
 		// Use no-op provider
 		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(stdouttrace.New(stdouttrace.WithWriter(nullWriter{}))), res))
 	default:
