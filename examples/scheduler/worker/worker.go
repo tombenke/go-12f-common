@@ -14,7 +14,6 @@ import (
 	metric_api "go.opentelemetry.io/otel/metric"
 
 	"github.com/tombenke/go-12f-common/v2/examples/scheduler/model"
-	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 const (

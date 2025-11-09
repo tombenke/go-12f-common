@@ -157,7 +157,7 @@ func TestLogTableDriven(t *testing.T) {
 			level:  0,
 			msg:    "typed nil ptr",
 			args:   func() []any { var sp *StringBase = nil; return []any{sp, "val"} }(),
-			expect: logEntry{level: 0, msg: "typed nil ptr", kv: []any{"*obs_StringBase:<nil>", "val"}},
+			expect: logEntry{level: 0, msg: "typed nil ptr", kv: []any{"*oti_StringBase:<nil>", "val"}},
 		},
 	}
 

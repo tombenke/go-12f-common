@@ -24,7 +24,6 @@ const (
 	KeyTestSuite  = "test.suite"
 
 	// Metric labels
-	MetrAttrErr = "error"
-	KeyApp      = "app"
-	KeyService  = "service"
+	KeyApp     = "app"
+	KeyService = "service"
 )
