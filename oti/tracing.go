@@ -2,20 +2,50 @@ package oti
 
 import (
 	"context"
-	"github.com/tombenke/go-12f-common/v2/must"
+	"log/slog"
+	"sync"
+	"sync/atomic"
+
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+	logger "github.com/tombenke/go-12f-common/v2/log"
+)
+
+type OtelErrorHandler struct {
+	log *slog.Logger
+}
+
+func (e *OtelErrorHandler) Handle(err error) {
+	e.log.Error("OTEL ERROR", logger.FieldError, err)
+}
+
+const (
+	SpanKeyComponent = attribute.Key("app")
+	SpanKeyService   = semconv.ServiceNameKey
+	SpanKeyInstance  = attribute.Key("instance")
+
+	TraceparentHeader = "traceparent"
+)
+
+var (
+	otelErrorHandler  atomic.Pointer[OtelErrorHandler] //nolint:gochecknoglobals // local once
+	onceSetOtelGlobal = sync.OnceFunc(func() {         //nolint:gochecknoglobals // local once
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+		))
+		otel.SetErrorHandler(otelErrorHandler.Load())
+	})
 )
 
 // TODO:
-// initOtlpTracerProvider Initializes an OTLP exporter, and configures the corresponding tracer provider.
-func initOtlpTracerProvider(ctx context.Context, res *resource.Resource) (*sdktrace.TracerProvider, error) {
+// initTracerProvider Initializes an OTLP exporter, and configures the corresponding tracer provider.
+func initTracerProvider(ctx context.Context, tracerExporter sdktrace.SpanExporter, res *resource.Resource) (*sdktrace.TracerProvider, error) {
 	// Set up a trace exporter
-	tracerExporter := must.MustVal(otlptracegrpc.New(ctx))
 	bsp := sdktrace.NewBatchSpanProcessor(tracerExporter)
 
 	tracerProvider := sdktrace.NewTracerProvider(
@@ -24,32 +54,11 @@ func initOtlpTracerProvider(ctx context.Context, res *resource.Resource) (*sdktr
 		sdktrace.WithSpanProcessor(bsp),
 	)
 
-	// Set the newly created tracer provider to be global
-	otel.SetTracerProvider(tracerProvider)
-
-	// Set global propagator to tracecontext (the default is no-op).
-	otel.SetTextMapPropagator(propagation.TraceContext{})
-
-	return tracerProvider, nil
-}
-
-// initConsoleTracerProvider Initializes an stdout exporter, and configures the corresponding tracer provider.
-func initConsoleTracerProvider(ctx context.Context, res *resource.Resource) (*sdktrace.TracerProvider, error) {
-	tracerExporter := must.MustVal(stdouttrace.New(stdouttrace.WithPrettyPrint()))
-
-	bsp := sdktrace.NewBatchSpanProcessor(tracerExporter)
-
-	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(tracerExporter),
-		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(bsp),
-	)
-
-	// Set the newly created tracer provider to be global
-	otel.SetTracerProvider(tracerProvider)
-
-	// Set global propagator to tracecontext (the default is no-op).
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	if eh := otelErrorHandler.Load(); eh == nil {
+		eh = &OtelErrorHandler{log: logger.GetFromContextOrDefault(ctx)}
+		otelErrorHandler.Store(eh)
+	}
+	onceSetOtelGlobal()
 
 	return tracerProvider, nil
 }

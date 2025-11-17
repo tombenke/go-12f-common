@@ -12,6 +12,7 @@ import (
 
 	"github.com/tombenke/go-12f-common/v2/log"
 	"github.com/tombenke/go-12f-common/v2/must"
+	"github.com/tombenke/go-12f-common/v2/oti"
 	"golang.org/x/exp/maps"
 )
 
@@ -127,10 +128,10 @@ func (h *HealthCheck) waitUntilServerStarted(ctx context.Context) {
 // Shut down the HealtCheck services
 func (h *HealthCheck) Shutdown(ctx context.Context) {
 	defer h.wg.Done()
-	slog.InfoContext(ctx, "Shutdown", "component", "HealthCheck")
+	slog.InfoContext(ctx, "Shutdown", string(oti.FieldComponent), "HealthCheck")
 	must.Must(h.server.Shutdown(context.Background()))
 }
 
 func (h *HealthCheck) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, "component", "HealthCheck")
+	return log.With(ctx, string(oti.FieldComponent), "HealthCheck")
 }

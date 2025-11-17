@@ -25,5 +25,9 @@ vendor/
 # build directory
 build
 
+# Go workspace file
+go.work
+
+# VSCode config
 # IDE
 .vscode/

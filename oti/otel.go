@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -14,7 +15,10 @@ import (
 	"github.com/tombenke/go-12f-common/v2/log"
 	"github.com/tombenke/go-12f-common/v2/must"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -24,10 +28,24 @@ import (
 type Otel struct {
 	config           Config
 	wg               *sync.WaitGroup
-	meterProvider    *sdkmetric.MeterProvider
-	tracerProvider   *sdktrace.TracerProvider
 	prometheusServer *http.Server
 }
+
+// nullWriter implements io.Writer and discards all data written to it.
+type nullWriter struct{}
+
+// Write implements io.Writer for nullWriter.
+func (nullWriter) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
+type ConsoleMeterProviderOut int
+
+const (
+	ConsoleNone ConsoleMeterProviderOut = iota
+	ConsoleStdout
+	ConsoleStderr
+)
 
 type MetricExporterType string
 
@@ -52,84 +70,98 @@ func NewOtel(wg *sync.WaitGroup, config Config) Otel {
 }
 
 func (o *Otel) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, "component", "Otel")
+	return log.With(ctx, FieldComponent, "Otel")
 }
 
 // Setup the Otel providers and exporter services
-func (o *Otel) Startup(ctx context.Context) {
-	_, logger := o.getLogger(ctx)
-	logger.Info("Starting up")
+func (o *Otel) Startup(ctx context.Context) context.Context {
+	resAttrs := getResourceAttributes()
+	resFields := []any{}
+	for _, attr := range resAttrs {
+		resFields = append(resFields, string(attr.Key), attr.Value.AsString())
+	}
+	ctx = LogWithValues(ctx, resFields...)
+	ctxLog, _ := log.FromContext(ctx, string(FieldComponent), "Otel")
+	Log(ctxLog, 0, "Starting up")
 
 	// Create Resource for tracing and metrics
-	res := must.MustVal(resource.New(ctx, resource.WithAttributes(getResourceAttributes()...)))
+	res := must.MustVal(resource.New(ctx))
 	res = must.MustVal(resource.Merge(res, resource.Default()))
+	res = must.MustVal(resource.Merge(res, must.MustVal(resource.New(ctx, resource.WithAttributes(getResourceAttributes()...)))))
 
 	// Startup Metrics
 	o.startupMetrics(ctx, res)
 
 	// Startup Tracing
 	o.startupTracer(ctx, res)
+
+	return ctx
 }
 
 // Shut down the Otel services
 func (o *Otel) Shutdown(ctx context.Context) {
 	//defer o.wg.Done()
-	slog.InfoContext(ctx, "Shutdown", "component", "Otel")
+	ctx = LogWithValues(ctx, FieldComponent, "Otel")
+
+	Log(ctx, 0, "Shutdown")
 	o.shutdownMetrics(ctx)
 	o.shutdownTracer(ctx)
 }
 
 // Startup Metrics
 func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
-	_, logger := o.getLogger(ctx)
 	exporterType := strings.ToLower(o.config.OtelMetricsExporter)
-	logger.Info("Startup Metrics", "exporter", exporterType)
+	Log(ctx, 0, "Startup Metrics", FieldMetricExporter, exporterType)
+	var meterProvider *sdkmetric.MeterProvider
 
 	switch MetricExporterType(exporterType) {
 	case MetricExporterTypeOTLP:
-		o.meterProvider = must.MustVal(initOtlpMeterProvider(ctx, res))
+		meterProvider = must.MustVal(initOtlpMeterProvider(ctx, res))
 
 	case MetricExporterTypePrometheus:
-		o.meterProvider = must.MustVal(initPrometheusMeterProvider(ctx, res))
+		meterProvider = must.MustVal(initPrometheusMeterProvider(ctx, res))
 
-		_, cancelCtx := context.WithCancel(context.Background())
-		mux := http.NewServeMux()
-		mux.Handle("/metrics", promhttp.Handler())
-		o.prometheusServer = &http.Server{
-			Addr:    fmt.Sprintf(":%d", o.config.OtelExporterPrometheusPort),
-			Handler: mux,
+		if o.config.OtelExporterPrometheusPort > 0 {
+			_, cancelCtx := context.WithCancel(context.Background())
+			mux := http.NewServeMux()
+			mux.Handle("/metrics", promhttp.Handler())
+			o.prometheusServer = &http.Server{
+				Addr:    fmt.Sprintf(":%d", o.config.OtelExporterPrometheusPort),
+				Handler: mux,
+			}
+
+			// Start the blocking server call in a separate thread
+			o.wg.Add(1)
+			go func() {
+				// Start prometheus metrics exporter server
+				err := o.prometheusServer.ListenAndServe()
+				if errors.Is(err, http.ErrServerClosed) {
+					Log(ctx, 0, "Server closed")
+				} else if err != nil {
+					LogError(ctx, err, "Error listening for server")
+				}
+				cancelCtx()
+			}()
 		}
 
-		// Start the blocking server call in a separate thread
-		o.wg.Add(1)
-		go func() {
-			// Start prometheus metrics exporter server
-			err := o.prometheusServer.ListenAndServe()
-			if errors.Is(err, http.ErrServerClosed) {
-				logger.Info("Server closed")
-			} else if err != nil {
-				logger.Error("Error listening for server", "error", err)
-			}
-			cancelCtx()
-		}()
-
 	case MetricExporterTypeConsole:
-		o.meterProvider = must.MustVal(initConsoleMeterProvider(ctx, res))
+		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleStdout))
 
 	case MetricExporterTypeNone:
 		// Use no-op provider
+		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleNone))
 	default:
-		logger.Error("wrong metric exporter type", "otel-metric-exporter", o.config.OtelMetricsExporter)
+		LogError(ctx, ErrOtelConfig, "wrong metric exporter type", "otel-metric-exporter", o.config.OtelMetricsExporter)
 		panic(1)
 	}
 
-	// Initializes InstrumentRegistries
-	GetMeter(o.meterProvider)
+	otel.SetMeterProvider(meterProvider)
 }
 
 // Shutdown Metrics
 func (o *Otel) shutdownMetrics(ctx context.Context) {
-	slog.InfoContext(ctx, "Shutdown", "component", "Otel.Metrics")
+	ctx = LogWithValues(ctx, FieldComponent, "Otel.Metrics")
+	Log(ctx, 0, "Shutdown")
 
 	// Shutdown prometheus metrics exporter server
 	if o.prometheusServer != nil {
@@ -137,58 +169,71 @@ func (o *Otel) shutdownMetrics(ctx context.Context) {
 		must.Must(o.prometheusServer.Shutdown(ctx))
 	}
 
-	if o.meterProvider != nil {
-		if err := o.meterProvider.Shutdown(ctx); err != nil {
-			slog.ErrorContext(ctx, "failed MeterProvider shutdown", "error", err)
+	if meterProvider, is := otel.GetMeterProvider().(*sdkmetric.MeterProvider); is {
+		if err := meterProvider.Shutdown(ctx); err != nil {
+			LogError(ctx, err, "failed MeterProvider shutdown")
 		}
 	}
 }
 
 // Startup Tracer
-func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) {
-	_, logger := o.getLogger(ctx)
-
+func (o *Otel) startupTracer(ctx context.Context, res *resource.Resource) context.Context {
 	exporterType := strings.ToLower(o.config.OtelTracesExporter)
-	logger.Info("Startup Tracing", "exporter", exporterType)
+	Log(ctx, 0, "Startup Tracing", FieldExporter, exporterType)
 
+	var tracerProvider *sdktrace.TracerProvider
 	switch TraceExporterType(exporterType) {
 	case TraceExporterTypeOTLP:
-		o.tracerProvider = must.MustVal(initOtlpTracerProvider(ctx, res))
-	/*
-		case "jaeger":
-			o.tracerProvider = must.MustVal(initJaegerTracerProvider(ctx, res))
+		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(otlptracegrpc.New(ctx)), res))
 
-		case "zipkin":
-			o.tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res))
-	*/
+		/*
+			case "jaeger":
+				tracerProvider = must.MustVal(initJaegerTracerProvider(ctx, res))
+
+			case "zipkin":
+				tracerProvider = must.MustVal(initZipkinTracerProvider(ctx, res))
+		*/
+
 	case TraceExporterTypeConsole:
-		o.tracerProvider = must.MustVal(initConsoleTracerProvider(ctx, res))
+		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(stdouttrace.New(stdouttrace.WithPrettyPrint())), res))
 
-	case TraceExporterTypeNone:
+	case TraceExporterTypeNone, "":
 		// Use no-op provider
+		tracerProvider = must.MustVal(initTracerProvider(ctx, must.MustVal(stdouttrace.New(stdouttrace.WithWriter(nullWriter{}))), res))
 	default:
-		logger.Error("wrong tracer exporter type", "otel-traces-exporter", o.config.OtelTracesExporter)
+		LogError(ctx, ErrOtelConfig, "wrong tracer exporter type", "otel-traces-exporter", o.config.OtelTracesExporter)
 		panic(1)
 	}
+
+	otel.SetTracerProvider(tracerProvider)
+
+	return ctx
 }
 
 // Shutdown Tracing
 func (o *Otel) shutdownTracer(ctx context.Context) {
-	slog.InfoContext(ctx, "Shutdown", "component", "Otel.Tracer")
+	ctx = LogWithValues(ctx, FieldComponent, "Otel.Tracer")
+	Log(ctx, 0, "Shutdown")
 
-	if o.tracerProvider != nil {
-		if err := o.tracerProvider.Shutdown(ctx); err != nil {
-			slog.ErrorContext(ctx, "failed TracerProvider shutdown", "error", err)
+	if tracerProvider, is := otel.GetTracerProvider().(*sdktrace.TracerProvider); is {
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			LogError(ctx, err, "failed TracerProvider shutdown")
 		}
 	}
 }
 
+// getResourceAttributes returns common resource attributes for Otel telemetry data.
+// Shall be used for both logs, tracing and metrics.
+// Check conventions https://helm.sh/docs/chart_best_practices/labels/ .
+// If it's set via Helm labels, these attributes can be skipped here to avoid duplication.
 func getResourceAttributes() []attribute.KeyValue {
-	attributes := []attribute.KeyValue{}
-
-	// Add service.version attribute if it is defined
-	if buildinfo.Version() != "" {
-		attributes = append(attributes, semconv.ServiceVersionKey.String(buildinfo.Version()))
+	hostname, _ := os.Hostname() //nolint:errcheck // not important
+	podNamespace := os.Getenv("POD_NAMESPACE")
+	attributes := []attribute.KeyValue{
+		semconv.ServiceNamespaceKey.String(podNamespace),
+		FieldApp.String(buildinfo.AppName()),
+		semconv.ServiceInstanceIDKey.String(hostname),
+		semconv.ServiceVersionKey.String(buildinfo.Version()),
 	}
 
 	// TODO: May add further attributes here

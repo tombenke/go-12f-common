@@ -32,6 +32,8 @@ func (s *WorkerTestSuite) SetupSuite() {
 		OtelMetricsExporter: string(oti.MetricExporterTypeConsole),
 	})
 	s.oti.Startup(s.arCtx)
+
+	_ = oti.GetMeter(s.arCtx)
 }
 
 func (s *WorkerTestSuite) TearDownSuite() {

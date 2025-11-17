@@ -1,4 +1,4 @@
-package oti_test
+package oti
 
 import (
 	"fmt"
@@ -7,18 +7,17 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 func TestOtelConfigWithDefaults(t *testing.T) {
-	config := oti.Config{}
+	config := Config{}
 	fs := pflag.NewFlagSet("test-fs", pflag.ContinueOnError)
 	config.GetConfigFlagSet(fs)
 	require.NoError(t, config.LoadConfig(fs))
-	assert.Equal(t, oti.Config{
-		OtelTracesExporter:         oti.OTEL_TRACES_EXPORTER_DEFAULT,
-		OtelMetricsExporter:        oti.OTEL_METRICS_EXPORTER_DEFAULT,
-		OtelExporterPrometheusPort: oti.OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
+	assert.Equal(t, Config{
+		OtelTracesExporter:         OTEL_TRACES_EXPORTER_DEFAULT,
+		OtelMetricsExporter:        OTEL_METRICS_EXPORTER_DEFAULT,
+		OtelExporterPrometheusPort: OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
 	}, config)
 }
 
@@ -38,24 +37,24 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		"OTEL_EXPORTER_PROMETHEUS_PORT": fmt.Sprintf("%v", EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_ENV_VAR),
 	}
 	cliArgs := []string{
-		fmt.Sprintf("--%v=%v", oti.OTEL_TRACES_EXPORTER_ARG_NAME, EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG),
-		fmt.Sprintf("--%v=%v", oti.OTEL_METRICS_EXPORTER_ARG_NAME, EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG),
-		fmt.Sprintf("--%v=%v", oti.OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME, EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", OTEL_TRACES_EXPORTER_ARG_NAME, EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", OTEL_METRICS_EXPORTER_ARG_NAME, EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG),
+		fmt.Sprintf("--%v=%v", OTEL_EXPORTER_PROMETHEUS_PORT_ARG_NAME, EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG),
 	}
 	testCases := map[string]struct {
-		expectedConfig oti.Config
+		expectedConfig Config
 		envVars        map[string]string
 		cliArgs        []string
 	}{
 		"default values": {
-			expectedConfig: oti.Config{
-				OtelTracesExporter:         oti.OTEL_TRACES_EXPORTER_DEFAULT,
-				OtelMetricsExporter:        oti.OTEL_METRICS_EXPORTER_DEFAULT,
-				OtelExporterPrometheusPort: oti.OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
+			expectedConfig: Config{
+				OtelTracesExporter:         OTEL_TRACES_EXPORTER_DEFAULT,
+				OtelMetricsExporter:        OTEL_METRICS_EXPORTER_DEFAULT,
+				OtelExporterPrometheusPort: OTEL_EXPORTER_PROMETHEUS_PORT_DEFAULT,
 			},
 		},
 		"from environment variables": {
-			expectedConfig: oti.Config{
+			expectedConfig: Config{
 				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_ENV_VAR,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_ENV_VAR,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_ENV_VAR,
@@ -63,7 +62,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			envVars: envVars,
 		},
 		"from cli args": {
-			expectedConfig: oti.Config{
+			expectedConfig: Config{
 				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG,
@@ -71,7 +70,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 			cliArgs: cliArgs,
 		},
 		"prefer cli args over env vars": {
-			expectedConfig: oti.Config{
+			expectedConfig: Config{
 				OtelTracesExporter:         EXPECTED_OTEL_TRACES_EXPORTER_FROM_CLI_ARG,
 				OtelMetricsExporter:        EXPECTED_OTEL_METRICS_EXPORTER_FROM_CLI_ARG,
 				OtelExporterPrometheusPort: EXPECTED_OTEL_EXPORTER_PROMETHEUS_PORT_FROM_CLI_ARG,
@@ -85,7 +84,7 @@ func Test_Config_GetConfigFlagSet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			// given
 			fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
-			cfg := &oti.Config{}
+			cfg := &Config{}
 
 			for k, v := range testCase.envVars {
 				t.Setenv(k, v)

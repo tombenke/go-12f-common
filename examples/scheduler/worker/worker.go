@@ -10,10 +10,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/tombenke/go-12f-common/v2/healthcheck"
 	"github.com/tombenke/go-12f-common/v2/log"
+	"github.com/tombenke/go-12f-common/v2/oti"
 	metric_api "go.opentelemetry.io/otel/metric"
 
 	"github.com/tombenke/go-12f-common/v2/examples/scheduler/model"
-	"github.com/tombenke/go-12f-common/v2/oti"
 )
 
 const (
@@ -141,7 +141,7 @@ TODO delete this function, because:
 * multiple calls adds the component field multiple times
 */
 func (t *Worker) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, "component", t.ComponentName())
+	return log.With(ctx, string(oti.FieldComponent), t.ComponentName())
 }
 
 func (t *Worker) ComponentName() string {

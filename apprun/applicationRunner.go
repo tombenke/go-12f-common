@@ -125,12 +125,12 @@ func (ar *ApplicationRunner) Run() error {
 		},
 	)
 
-	// Start the startup process of the application to run
-	hc.Startup(ctx)
-
 	// Setup the OTEL instrumentation
 	oti := oti.NewOtel(ar.wg, ar.config.OtelConfig)
-	oti.Startup(ctx)
+	ctx = oti.Startup(ctx)
+
+	// Start the startup process of the application to run
+	hc.Startup(ctx)
 
 	// Startup every component
 	if err := ar.startupComponents(ctx); err != nil {
