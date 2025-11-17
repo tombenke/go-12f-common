@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
+	////"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -69,9 +69,9 @@ func NewOtel(wg *sync.WaitGroup, config Config) Otel {
 	return Otel{wg: wg, config: config}
 }
 
-func (o *Otel) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
-	return log.With(ctx, FieldComponent, "Otel")
-}
+////func (o *Otel) getLogger(ctx context.Context) (context.Context, *slog.Logger) {
+////	return log.With(ctx, FieldComponent, "Otel")
+////}
 
 // Setup the Otel providers and exporter services
 func (o *Otel) Startup(ctx context.Context) context.Context {
