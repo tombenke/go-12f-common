@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	////"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -147,7 +146,7 @@ func (o *Otel) startupMetrics(ctx context.Context, res *resource.Resource) {
 	case MetricExporterTypeConsole:
 		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleStdout))
 
-	case MetricExporterTypeNone:
+	case MetricExporterTypeNone, "":
 		// Use no-op provider
 		meterProvider = must.MustVal(initConsoleMeterProvider(res, ConsoleNone))
 	default:
